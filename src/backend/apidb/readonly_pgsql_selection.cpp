@@ -918,7 +918,7 @@ readonly_pgsql_selection::factory::factory(const po::variables_map &opts)
   m_connection.set_client_encoding(opts["charset"].as<std::string>());
 
   // set the connection to use readonly transaction.
-  m_connection.set_variable("default_transaction_read_only", "true");
+  m_connection.set_session_var("default_transaction_read_only", "true");
 }
 
 readonly_pgsql_selection::factory::~factory() = default;

@@ -2,13 +2,10 @@
 #define BACKEND_APIDB_PQXX_STRING_TRAITS_HPP
 
 #include "cgimap/types.hpp"
-#include "cgimap/infix_ostream_iterator.hpp"
-#include <vector>
 #include <set>
-#include <sstream>
-#include <algorithm>
 #include <pqxx/pqxx>
 
+// See https://github.com/jtv/libpqxx/blob/master/include/pqxx/doc/datatypes.md
 namespace pqxx {
 
 /*
@@ -22,32 +19,15 @@ namespace pqxx {
  * code.
  */
 #define PQXX_ARRAY_STRING_TRAITS(type)                                  \
-  template <> struct string_traits<type> {                              \
-    static const char *name() { return #type; }                         \
-    static bool has_null() { return false; }                            \
-    static bool is_null(const type &) { return false; }                 \
-    static std::stringstream null() {                                   \
-      internal::throw_null_conversion(name());                          \
-      throw 0; /* need this to satisfy compiler escape detection */     \
-    }                                                                   \
-    static void from_string(const char[], type &) {}                    \
-    static std::string to_string(const type &ids) {                     \
-      std::stringstream ostr;                                           \
-      ostr << "{";                                                      \
-      std::copy(ids.begin(), ids.end(),                                 \
-                infix_ostream_iterator<type::value_type>(ostr, ","));   \
-      ostr << "}";                                                      \
-      return ostr.str();                                                \
-    }                                                                   \
-  }
+  template <>                                                           \
+  struct nullness<type> : no_null<type> {};                             \
+                                                                        \
+  template<>                                                            \
+  struct string_traits<type> : internal::array_string_traits<type> {};
 
-PQXX_ARRAY_STRING_TRAITS(std::vector<osm_nwr_id_t>);
+
 PQXX_ARRAY_STRING_TRAITS(std::set<osm_nwr_id_t>);
-PQXX_ARRAY_STRING_TRAITS(std::vector<tile_id_t>);
-PQXX_ARRAY_STRING_TRAITS(std::vector<osm_changeset_id_t>);
 PQXX_ARRAY_STRING_TRAITS(std::set<osm_changeset_id_t>);
-PQXX_ARRAY_STRING_TRAITS(std::vector<std::string>);
-PQXX_ARRAY_STRING_TRAITS(std::vector<bool>);
 
 } // namespace pqxx
 

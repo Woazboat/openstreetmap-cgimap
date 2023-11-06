@@ -400,12 +400,6 @@ int main(int argc, char **argv) {
     std::cerr << "Error: " << er.what() << std::endl
               << "Caused by: " << er.query() << std::endl;
     return 1;
-
-  } catch (const pqxx::pqxx_exception &e) {
-    // Catch-all for any other postgres exceptions
-    std::cerr << "Error: " << e.base().what() << std::endl;
-    return 1;
-
   } catch (const std::exception &e) {
     logger::message(e.what());
     std::cerr << "Error: " << e.what() << std::endl;

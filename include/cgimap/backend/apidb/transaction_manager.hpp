@@ -59,8 +59,7 @@ public:
 
   void prepare(const std::string &name, const std::string &);
 
-  pqxx::result exec(const std::string &query,
-                    const std::string &description = std::string());
+  pqxx::result exec(const std::string &query);
   void commit();
 
   template<typename... Args>

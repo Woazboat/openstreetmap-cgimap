@@ -21,9 +21,8 @@ void Transaction_Manager::prepare(const std::string &name,
   m_txn.conn().prepare(name, definition);
 }
 
-pqxx::result Transaction_Manager::exec(const std::string &query,
-                                       const std::string &description) {
-  return m_txn.exec(query, description);
+pqxx::result Transaction_Manager::exec(const std::string &query) {
+  return m_txn.exec(query);
 }
 
 void Transaction_Manager::commit() { m_txn.commit(); }

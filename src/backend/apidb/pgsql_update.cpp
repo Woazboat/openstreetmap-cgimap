@@ -171,7 +171,7 @@ pgsql_update::factory::factory(const po::variables_map &opts)
   // set the connection to readonly transaction, if disable-api-write flag is set
   if (opts.count("disable-api-write") != 0) {
     m_api_write_disabled = true;
-    m_connection.set_variable("default_transaction_read_only", "true");
+    m_connection.set_session_var("default_transaction_read_only", "true");
   }
 }
 
