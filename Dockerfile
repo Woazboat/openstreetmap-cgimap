@@ -5,6 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_SYSTEM="autotools"
 
+# Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+ARG BUILD_TYPE="Release"
+
 RUN apt-get update -qq && \
     apt-get install -y gcc g++ make autoconf automake libtool cmake ninja-build \
        libfcgi-dev libxml2-dev libmemcached-dev \
@@ -23,12 +26,11 @@ COPY . ./
 
 # Compile, install and remove source
 RUN if [ "$BUILD_SYSTEM" = "cmake" ]; then \
-        mkdir build && cd build && \
-        CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter" CMAKE_MAKE_PROGRAM=ninja cmake .. -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -G Ninja && \
-        cmake --build . && \
-        cmake --build . -t test && \
-        strip openstreetmap-cgimap && \
-        cp openstreetmap-cgimap ../ ; \
+        CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter" CMAKE_MAKE_PROGRAM=ninja cmake -B build -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -G Ninja && \
+        cmake --build build --config "$BUILD_TYPE" && \
+        cmake --build build -t test && \
+        strip build/openstreetmap-cgimap && \
+        cp build/openstreetmap-cgimap . ; \
     elif [ "$BUILD_SYSTEM" = "autotools" ]; then \
         ./autogen.sh && \
         ./configure --enable-static --disable-shared --enable-yajl CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter" && \
