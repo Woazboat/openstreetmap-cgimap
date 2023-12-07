@@ -1,65 +1,111 @@
 ---
-Language:        Cpp
-# BasedOnStyle:  LLVM
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+Language: Cpp
+BasedOnStyle:  LLVM
 AccessModifierOffset: -2
 AlignAfterOpenBracket: true
+AlignConsecutiveBitFields: Consecutive
+# AlignConsecutiveShortCaseStatements:
+#   Enabled: true
 AlignEscapedNewlinesLeft: false
-AlignOperands:   true
+AlignOperands: true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
+# AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
-AlwaysBreakAfterDefinitionReturnType: false
-AlwaysBreakTemplateDeclarations: false
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: false
+# AlwaysBreakAfterDefinitionReturnType: false
+AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: Both
 BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
-BinPackParameters: true
-BinPackArguments: true
-ColumnLimit:     80
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
+# BreakConstructorInitializersBeforeComma: false
+BreakInheritanceList: AfterComma
+ColumnLimit: 80
+CommentPragmas:  '^ IWYU pragma:'
+CompactNamespaces: false
+# ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
 DerivePointerAlignment: false
-ExperimentalAutoDetectBinPacking: false
+EmptyLineAfterAccessModifier: Leave
+EmptyLineBeforeAccessModifier: LogicalBlock
+# ExperimentalAutoDetectBinPacking: false
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^(<|")cgimap/backend/'
+    Priority: 4
+  - Regex: '^(<|")cgimap/api06/'
+    Priority: 3
+  - Regex: '^(<|")cgimap/'
+    Priority: 5
+  - Regex: '^(<|")(fmt|pqxx|cryptopp|argon2|boost|yajl|libmemcached|libxml|catch2)/'
+    Priority: 6
+  - Regex: '^(<|")(argon2|fcgiapp).h(>|")'
+    Priority: 6
+  - Regex: '<[[:alnum:].]+>'
+    Priority: 7
+IndentAccessModifiers: false
+IndentCaseBlocks: true
 IndentCaseLabels: false
+IndentGotoLabels: false
+IndentWidth: 2
 IndentWrappedFunctionNames: false
-IndentFunctionDeclarationAfterType: false
+InsertNewlineAtEOF: true
+# IndentFunctionDeclarationAfterType: false
+# KeepEmptyLinesAtEOF: false
 MaxEmptyLinesToKeep: 1
 KeepEmptyLinesAtTheStartOfBlocks: true
+LambdaBodyIndentation: Signature
+LineEnding: LF
 NamespaceIndentation: None
-ObjCBlockIndentWidth: 2
-ObjCSpaceAfterProperty: false
-ObjCSpaceBeforeProtocolList: true
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakString: 1000
-PenaltyBreakFirstLessLess: 120
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
+PackConstructorInitializers: Never
+# PenaltyBreakBeforeFirstCallParameter: 19
+# PenaltyBreakComment: 300
+# PenaltyBreakString: 1000
+# PenaltyBreakFirstLessLess: 120
+# PenaltyExcessCharacter: 1000000
+# PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
+QualifierAlignment: Left
+RemoveBracesLLVM: false
+RemoveSemicolon: true
+SeparateDefinitionBlocks: Always
 SpacesBeforeTrailingComments: 1
-Cpp11BracedListStyle: false
-Standard:        Cpp11
-IndentWidth:     2
-TabWidth:        8
-UseTab:          Never
+Standard: c++17
 BreakBeforeBraces: Attach
+SortUsingDeclarations: Lexicographic
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: true
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-SpacesInAngles:  false
-SpaceInEmptyParentheses: false
-SpacesInCStyleCastParentheses: false
-SpaceAfterCStyleCast: false
-SpacesInContainerLiterals: true
-SpaceBeforeAssignmentOperators: true
-ContinuationIndentWidth: 4
-CommentPragmas:  '^ IWYU pragma:'
-SpaceBeforeParens: ControlStatements
-DisableFormat:   false
-ForEachMacros:   [ DISABLE_THIS_FORMAT_OPTION, DISABLE_THIS_FORMAT_OPTION, DISABLE_THIS_FORMAT_OPTION ]
+SpacesInLineCommentPrefix:
+  Minimum: 1
+TabWidth: 8
+UseTab: Never
 ...
 
