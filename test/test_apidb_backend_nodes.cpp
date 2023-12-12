@@ -202,6 +202,20 @@ TEST_CASE("test_psql_array_to_vector", "[nodb]") {
     REQUIRE (values == actual_values);
   }
 
+  SECTION("NULL quoted") {
+    test = "{\"NULL\"}";
+    values = psql_array_to_vector(test);
+    actual_values = {"NULL"};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("empty strings ") {
+    test = R"({"","","",""})";
+    values = psql_array_to_vector(test);
+    actual_values = {"", "", "", ""};
+    REQUIRE (values == actual_values);
+  }
+
   SECTION("Two values") {
     test = "{1,2}";
     values = psql_array_to_vector(test);
@@ -224,6 +238,13 @@ TEST_CASE("test_psql_array_to_vector", "[nodb]") {
     REQUIRE (values == actual_values);
   }
 
+  SECTION("whitespace quoted") {
+    test = R"({""," ","  "})";
+    values = psql_array_to_vector(test);
+    actual_values = {"", " ", "  "};
+    REQUIRE (values == actual_values);
+  }
+
   SECTION("test with semicolon in key") {
     test = R"({use_sidepath,secondary,3,1,yes,50,"Rijksweg Noord",asphalt,left|through;right})";
     values = psql_array_to_vector(test);
@@ -236,6 +257,138 @@ TEST_CASE("test_psql_array_to_vector", "[nodb]") {
     actual_values.push_back("Rijksweg Noord");
     actual_values.push_back("asphalt");
     actual_values.push_back("left|through;right");
+    REQUIRE (values == actual_values);
+  }
+}
+
+TEST_CASE("test_psql_array_to_vector escaping", "[nodb][!mayfail]") {
+
+  std::string test;
+  std::vector<std::string> actual_values;
+  std::vector<std::string> values;
+
+  SECTION("whitespace escaped") {
+    test = R"({\ ,\ \ })";
+    values = psql_array_to_vector(test);
+    actual_values = {" ", "  "};
+    REQUIRE (values == actual_values);
+  }
+}
+
+
+static_assert(*psql_array_view_no_unescape::iterator("{foo,bar}") ==
+              psql_array_view_no_unescape::iterator::value_type{"foo", false});
+
+static_assert(*psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin() ==
+              psql_array_view_no_unescape::iterator::value_type{"foo", false});
+static_assert(*++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
+              psql_array_view_no_unescape::iterator::value_type{"bar", false});
+
+
+static_assert(*++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
+              psql_array_view_no_unescape::iterator::value_type{R"(ba\"z)", true});
+static_assert(*++++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
+              psql_array_view_no_unescape::iterator::value_type{R"(b\\at)", true});
+static_assert(*++++++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
+              psql_array_view_no_unescape::iterator::value_type{R"(b\"a\\t)", true});
+
+TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
+  using result_vector_t = std::vector<std::pair<std::optional<std::string>, bool>>;
+
+  std::string test;
+  std::vector<std::pair<std::optional<std::string>, bool>> actual_values;
+
+  SECTION("NULL") {
+    test = "{NULL}";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("repeated NULL") {
+    test = "{NULL,NULL,NULL}";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{},{},{}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("NULL quoted") {
+    test = "{\"NULL\"}";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("empty strings") {
+    test = R"({"","","",""})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"", false}, {"", false}, {"", false}, {"", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("Two values") {
+    test = "{1,2}";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"1", false}, {"2", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("Two strings") {
+    test = R"({"TEST",TEST123})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"TEST", false}, {"TEST123", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("whitespace") {
+    test = R"({\ ,\ \ ," ","  "})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{R"(\ )", true}, {R"(\ \ )", true}, {" ", false}, {"  ", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("Complex pattern") {
+    test = R"({"},\"",",{}}\\"})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{R"(},\")", true}, {R"(,{}}\\)", true}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("test array with empty values") {
+    test = R"({,,,"",,,})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values.emplace_back();
+    actual_values.emplace_back();
+    actual_values.emplace_back();
+    actual_values.emplace_back("", false);
+    actual_values.emplace_back();
+    actual_values.emplace_back();
+    actual_values.emplace_back();
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("test with semicolon in key") {
+    test = R"({use_sidepath,secondary,"3",1,yes,50,"Rijksweg Noord",asphalt,left|through;right})";
+    auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values.emplace_back("use_sidepath", false);
+    actual_values.emplace_back("secondary", false);
+    actual_values.emplace_back("3", false);
+    actual_values.emplace_back("1", false);
+    actual_values.emplace_back("yes", false);
+    actual_values.emplace_back("50", false);
+    actual_values.emplace_back("Rijksweg Noord", false);
+    actual_values.emplace_back("asphalt", false);
+    actual_values.emplace_back("left|through;right", false);
     REQUIRE (values == actual_values);
   }
 }
