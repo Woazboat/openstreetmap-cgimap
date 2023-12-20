@@ -14,6 +14,8 @@
 
 #include <sys/time.h>
 #include <cstdio>
+#include <string>
+#include <string_view>
 
 #include "cgimap/time.hpp"
 #include "cgimap/oauth.hpp"
@@ -390,6 +392,119 @@ TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
     actual_values.emplace_back("asphalt", false);
     actual_values.emplace_back("left|through;right", false);
     REQUIRE (values == actual_values);
+  }
+}
+
+TEST_CASE("psql unescape", "[nodb]") {
+  std::vector<std::pair<std::string, std::string>> data{
+    {"foobar", "foobar"},
+    {R"(foo\\bar)", R"(foo\bar)"},
+    {R"(foo\\bar\\)", R"(foo\bar\)"},
+    {R"(\\foo\\bar\\)", R"(\foo\bar\)"},
+    {R"(\"foo\"bar\")", R"("foo"bar")"},
+    {R"(foo\ bar\")", R"(foo bar")"},
+    {R"(\\\\\\)", R"(\\\)"},
+    {R"(\ \ \ )", R"(   )"},
+    {R"(\"\\\ )", R"("\ )"},
+    {R"(abc\"\\\ def)", R"(abc"\ def)"},
+    {R"(\)", R"()"},
+    {R"(\\\)", R"(\)"},
+    {R"(foo\)", R"(foo)"},
+  };
+  for (const auto& [input, expected] : data) {
+    CHECK(unescape(input) == expected);
+  }
+}
+
+TEST_CASE("psql_array_view_no_unescape + unescape", "[nodb]") {
+  std::string test;
+  std::vector<std::optional<std::string>> actual_values;
+  std::vector<std::optional<std::string>> values;
+
+  SECTION("Complex pattern") {
+    test = R"({"},\"",",{}}\\"})";
+    actual_values = {{R"(},")"}, {R"(,{}}\)"}};
+
+    auto view = psql_array_view_no_unescape(test.c_str());
+    for (auto [str, escaped] : view) {
+      if (escaped) {
+        values.emplace_back(unescape(*str));
+      } else {
+        values.emplace_back(*str);
+      }
+    }
+
+    REQUIRE(values == actual_values);
+  }
+
+  SECTION("test with semicolon in key") {
+    test = R"({use_sidepath,secondary,"3",1,yes,50,"Rijksweg Noord",asphalt,left|through;right})";
+    actual_values = {
+      {"use_sidepath"},
+      {"secondary"},
+      {"3"},
+      {"1"},
+      {"yes"},
+      {"50"},
+      {"Rijksweg Noord"},
+      {"asphalt"},
+      {"left|through;right"},
+    };
+
+    auto view = psql_array_view_no_unescape(test.c_str());
+    for (auto [str, escaped] : view) {
+      if (escaped) {
+        values.emplace_back(unescape(*str));
+      } else {
+        values.emplace_back(*str);
+      }
+    }
+
+    REQUIRE(values == actual_values);
+  }
+
+  SECTION("escaping") {
+    test = R"({foo,ba\,r,ba\"z,"b\\at","b\"a\\t"})";
+    actual_values = {
+      {R"(foo)"},
+      {R"(ba,r)"},
+      {R"(ba"z)"},
+      {R"(b\at)"},
+      {R"(b"a\t)"},
+    };
+
+    auto view = psql_array_view_no_unescape(test.c_str());
+    for (auto [str, escaped] : view) {
+      if (escaped) {
+        values.emplace_back(unescape(*str));
+      } else {
+        values.emplace_back(*str);
+      }
+    }
+
+    REQUIRE(values == actual_values);
+  }
+
+  SECTION("quoting + escaping") {
+    test = R"({"foo","b{,a\,}r","ba\"z","b\\at","b\"a\\t"})";
+    actual_values = {
+      {R"(foo)"},
+      {R"(b{,a,}r)"},
+      {R"(ba"z)"},
+      {R"(b\at)"},
+      {R"(b"a\t)"},
+    };
+
+    auto view = psql_array_view_no_unescape(test.c_str());
+    for (auto [str, escaped] : view) {
+      if (escaped) {
+        values.emplace_back(unescape(*str));
+      } else {
+        values.emplace_back(*str);
+      }
+    }
+
+    REQUIRE(values == actual_values);
   }
 }
 

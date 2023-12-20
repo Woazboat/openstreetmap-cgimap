@@ -212,4 +212,20 @@ inline std::ostream& operator<<(std::ostream& os,
   return os;
 }
 
+inline std::string unescape(std::string_view str) {
+  std::string out;
+
+  bool escaped = false;
+  for (auto c : str) {
+    if (c == '\\' && !escaped) {
+      escaped = true;
+    } else {
+      escaped = false;
+      out.push_back(c);
+    }
+  }
+
+  return out;
+}
+
 #endif /* CGIMAP_BACKEND_APIDB_COMMON_PGSQL_SELECTION_HPP */
