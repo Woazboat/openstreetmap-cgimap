@@ -278,21 +278,61 @@ TEST_CASE("test_psql_array_to_vector escaping", "[nodb][!mayfail]") {
 }
 
 
-static_assert(*psql_array_view_no_unescape::iterator("{foo,bar}") ==
-              psql_array_view_no_unescape::iterator::value_type{"foo", false});
+static_assert(*psql_array_view_no_unescape<>::iterator("{foo,bar}") == 
+              psql_array_view_no_unescape<>::iterator::value_type{"foo", false});
 
-static_assert(*psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin() ==
-              psql_array_view_no_unescape::iterator::value_type{"foo", false});
-static_assert(*++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
-              psql_array_view_no_unescape::iterator::value_type{"bar", false});
+static_assert(*psql_array_view_no_unescape<false, false>::iterator("{foo,bar}") == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{"foo"});
 
+constexpr const auto psql_array_view_no_unescape_teststr = R"({foo,bar,ba\"z,"b\\at","b\"a\\t",ba\,p,"ba,n"})";
+static_assert(*psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin() == 
+              psql_array_view_no_unescape<>::iterator::value_type{"foo", false});
+static_assert(*++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{"bar", false});
+static_assert(*++++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{R"(ba\"z)", true});
+static_assert(*++++++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{R"(b\\at)", true});
+static_assert(*++++++++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{R"(b\"a\\t)", true});
+static_assert(*++++++++++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{R"(ba\,p)", true});
+static_assert(*++++++++++++(psql_array_view_no_unescape(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<>::iterator::value_type{R"(ba,n)", false});
 
-static_assert(*++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
-              psql_array_view_no_unescape::iterator::value_type{R"(ba\"z)", true});
-static_assert(*++++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
-              psql_array_view_no_unescape::iterator::value_type{R"(b\\at)", true});
-static_assert(*++++++++(psql_array_view_no_unescape(R"({foo,bar,ba\"z,"b\\at","b\"a\\t"})").begin()) ==
-              psql_array_view_no_unescape::iterator::value_type{R"(b\"a\\t)", true});
+static_assert(*psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin() == 
+              psql_array_view_no_unescape<false>::iterator::value_type{"foo", false});
+static_assert(*++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{"bar", false});
+static_assert(*++++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{R"(ba\"z)", true});
+static_assert(*++++++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{R"(b\\at)", true});
+static_assert(*++++++++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{R"(b\"a\\t)", true});
+static_assert(*++++++++++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{R"(ba\,p)", true});
+static_assert(*++++++++++++(psql_array_view_no_unescape<false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false>::iterator::value_type{R"(ba,n)", false});
+
+static_assert(*psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin() == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{"foo"});
+static_assert(*++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{"bar"});
+static_assert(*++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"(ba\"z)"});
+static_assert(*++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"("b\\at")"});
+static_assert(*++++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"("b\"a\\t")"});
+static_assert(*++++++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"(ba\)"});
+static_assert(*++++++++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"(p)"});
+static_assert(*++++++++++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"("ba)"});
+static_assert(*++++++++++++++++(psql_array_view_no_unescape<false, false>(psql_array_view_no_unescape_teststr).begin()) == 
+              psql_array_view_no_unescape<false, false>::iterator::value_type{R"(n")"});
 
 TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
   using result_vector_t = std::vector<std::pair<std::optional<std::string>, bool>>;
@@ -391,6 +431,84 @@ TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
     actual_values.emplace_back("Rijksweg Noord", false);
     actual_values.emplace_back("asphalt", false);
     actual_values.emplace_back("left|through;right", false);
+    REQUIRE (values == actual_values);
+  }
+}
+
+TEST_CASE("test psql_array_view_no_unescape no null", "[nodb]") {
+  using result_vector_nonull_t = std::vector<std::pair<std::string, bool>>;
+
+  std::string test;
+  result_vector_nonull_t actual_values;
+
+  SECTION("NULL nonull view") {
+    test = "{NULL}";
+    auto view = psql_array_view_no_unescape<false>(test.c_str());
+    result_vector_nonull_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("repeated NULL") {
+    test = "{NULL,NULL,NULL}";
+    auto view = psql_array_view_no_unescape<false>(test.c_str());
+    result_vector_nonull_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}, {"NULL", false}, {"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("NULL quoted") {
+    test = "{\"NULL\"}";
+    auto view = psql_array_view_no_unescape<false>(test.c_str());
+    result_vector_nonull_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+}
+
+TEST_CASE("test psql_array_view_no_unescape no escaping", "[nodb]") {
+  using result_vector_t = std::vector<std::string>;
+
+  std::string test;
+  result_vector_t actual_values;
+
+  SECTION("NULL nonull view") {
+    test = "{NULL}";
+    auto view = psql_array_view_no_unescape<false, false>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"NULL"}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("repeated NULL") {
+    test = "{NULL,NULL,NULL}";
+    auto view = psql_array_view_no_unescape<false, false>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"NULL"}, {"NULL"}, {"NULL"}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("NULL quoted") {
+    test = "{\"NULL\"}";
+    auto view = psql_array_view_no_unescape<false, false>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"\"NULL\""}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("integers") {
+    test = "{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}";
+    auto view = psql_array_view_no_unescape<false, false>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"1"}, {"2"}, {"3"}, {"4"}, {"5"}, {"6"}, {"7"}, {"8"}, {"9"}, {"10"}, {"11"}, {"12"}, {"13"}, {"14"}, {"15"}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("floats") {
+    test = "{1.1,2.2,3.3,4.4,5.5}";
+    auto view = psql_array_view_no_unescape<false, false>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"1.1"}, {"2.2"}, {"3.3"}, {"4.4"}, {"5.5"}};
     REQUIRE (values == actual_values);
   }
 }

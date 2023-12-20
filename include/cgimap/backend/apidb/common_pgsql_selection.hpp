@@ -57,13 +57,17 @@ void extract_changesets(
 // https://www.postgresql.org/docs/current/static/arrays.html#ARRAYS-IO
 std::vector<std::string> psql_array_to_vector(std::string_view str);
 
+template<bool _CanBeNull = true, bool _CanBeEscaped = true>
 class psql_array_view_no_unescape
 {
 public:
   class iterator
   {
   public:
-    using value_type = std::pair<std::optional<std::string_view>, bool>;
+    using _sv_val_t = std::conditional_t<_CanBeNull, std::optional<std::string_view>, std::string_view>;
+    using _final_val_t = std::conditional_t<_CanBeEscaped, std::pair<_sv_val_t, bool>, _sv_val_t>;
+  
+    using value_type = _final_val_t;
     using reference = value_type&;
     using pointer = void;
     using difference_type = void;
@@ -77,15 +81,19 @@ public:
     explicit constexpr iterator(const char* _start) : start(_start) {
       auto n = next(start);
       sview = std::get<0>(n);
-      sview_escaped = std::get<1>(n);
-      start = std::get<2>(n);
+      start = std::get<1>(n);
+      if constexpr (_CanBeEscaped) {
+        sview_escaped = std::get<2>(n);
+      }
     }
 
     constexpr iterator& operator++() {
       auto n = next(start);
       sview = std::get<0>(n);
-      sview_escaped = std::get<1>(n);
-      start = std::get<2>(n);
+      start = std::get<1>(n);
+      if constexpr (_CanBeEscaped) {
+        sview_escaped = std::get<2>(n);
+      }
 
       return *this;
     }
@@ -97,20 +105,34 @@ public:
     }
 
     constexpr value_type operator*() const {
-      return {sview, sview_escaped};
+      if constexpr (_CanBeEscaped) {
+        return {sview, sview_escaped};
+      } else {
+        return sview;
+      }
     }
 
     constexpr bool operator==(const iterator& other) const {
-      return sview == other.sview &&
-             sview_escaped == other.sview_escaped &&
-             start == other.start;
+      if constexpr (_CanBeEscaped) {
+        return sview == other.sview &&
+               sview_escaped == other.sview_escaped &&
+               start == other.start;
+      } else {
+        return sview == other.sview &&
+               start == other.start;
+      }
     }
 
     constexpr bool operator!=(const iterator& other) const {
       return !(*this == other);
     }
 
-    static constexpr std::tuple<std::optional<std::string_view>, bool, const char*> next(const char* str) {
+  private:
+
+    static constexpr std::conditional_t<_CanBeEscaped, 
+                                        std::tuple<_sv_val_t, const char*, bool>, 
+                                        std::pair<_sv_val_t, const char*>> 
+    next(const char* str) {
       if (!str)
         return {};
 
@@ -121,30 +143,35 @@ public:
 
       const char* i = str;
       for (; *i; ++i) {
-        if (escaped) {
-          escaped = false;
-          continue;
+        if constexpr (_CanBeEscaped) {
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+
+          if (*i == escape_char) {
+            escaped = true;
+            ever_escaped = true;
+            continue;
+          }
         }
 
-        if (*i == escape_char) {
-          escaped = true;
-          ever_escaped = true;
-          continue;
-        }
+        if constexpr (_CanBeEscaped) {
+          if (*i == quote_char) {
+            if (quoted) {
+              return {std::string_view{e_start, static_cast<size_t>(std::distance(e_start, i))},                      
+                      *(i+1) ? i+2 : i+1, // skip quote char+separator char for next element (unless end of string reached)
+                      ever_escaped};
+            }
 
-        if (*i == quote_char) {
+            quoted = true;
+            e_start = i + 1;
+            continue;
+          }
+
           if (quoted)
-            return {std::string_view{e_start, static_cast<size_t>(std::distance(e_start, i))},
-                    ever_escaped,
-                    *(i+1) ? i+2 : i+1}; // skip quote char+separator char for next element (unless end of string reached)
-
-          quoted = true;
-          e_start = i + 1;
-          continue;
+            continue;
         }
-
-        if (quoted)
-          continue;
 
         switch (*i) {
           case brace_open_char: // skip open brace at start
@@ -157,38 +184,57 @@ public:
           {
             auto len = std::distance(e_start, i);
             if (len == 0) {
-              return {{}, ever_escaped, i+1};
+              if constexpr (_CanBeEscaped) {
+                return {{}, i+1, ever_escaped};
+              } else {
+                return {{}, i+1};
+              }
             }
 
             auto sv = std::string_view{e_start, static_cast<size_t>(len)};
-            if (sv == "NULL") {
-              return {{}, ever_escaped, i+1};
+            if constexpr (_CanBeNull) {
+              if (sv == null_literal) {
+                if constexpr (_CanBeEscaped) {
+                  return {{}, i+1, ever_escaped};
+                } else {
+                  return {{}, i+1};
+                }
+              }
             }
 
-            return {sv, ever_escaped, i+1}; // skip separator char for next element
+            if constexpr (_CanBeEscaped) {
+              return {sv, i+1, ever_escaped}; // skip separator char for next element
+            } else {
+              return {sv, i+1}; // skip separator char for next element
+            }
           }
           default:
             continue;
         }
       }
 
-      if (auto d = std::distance(e_start, i); d > 0)
-        return {std::string_view{e_start, static_cast<size_t>(d)},
-                ever_escaped,
-                i};
+      if (auto d = std::distance(e_start, i); d > 0) {
+        if constexpr (_CanBeEscaped) {
+          return {std::string_view{e_start, static_cast<size_t>(d)},
+                  i,
+                  ever_escaped};
+        } else {
+          return {std::string_view{e_start, static_cast<size_t>(d)},
+                  i};
+        }
+      }
 
       return {};
     }
-
-  private:
 
     static const constexpr auto escape_char = '\\';
     static const constexpr auto quote_char = '"';
     static const constexpr auto separator_char = ',';
     static const constexpr auto brace_open_char = '{';
     static const constexpr auto brace_close_char = '}';
+    static const constexpr std::string_view null_literal = "NULL";
 
-    std::optional<std::string_view> sview{};
+    _sv_val_t sview{};
     bool sview_escaped{false};
     const char* start{nullptr};
   };
@@ -203,14 +249,6 @@ private:
   const char* str;
 };
 
-inline std::ostream& operator<<(std::ostream& os,
-    const psql_array_view_no_unescape::iterator::value_type & value ) {
-  if (value.first)
-    os << "{\"" << value.first.value() << "\", " << value.second << "}";
-  else
-    os << "{NULL, " << value.second << "}";
-  return os;
-}
 
 inline std::string unescape(std::string_view str) {
   std::string out;
