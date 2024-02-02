@@ -348,9 +348,17 @@ TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
     REQUIRE (values == actual_values);
   }
 
+  SECTION("single NULL treated as empty") {
+    test = "{NULL}";
+    auto view = psql_array_view_no_unescape<true, true, true>(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {};
+    REQUIRE (values == actual_values);
+  }
+
   SECTION("repeated NULL") {
     test = "{NULL,NULL,NULL}";
-    auto view = psql_array_view_no_unescape(test.c_str());
+    auto view = psql_array_view_no_unescape<true, true, true>(test.c_str());
     result_vector_t values{view.begin(), view.end()};
     actual_values = {{},{},{}};
     REQUIRE (values == actual_values);
@@ -359,6 +367,14 @@ TEST_CASE("test psql_array_view_no_unescape", "[nodb]") {
   SECTION("NULL quoted") {
     test = "{\"NULL\"}";
     auto view = psql_array_view_no_unescape(test.c_str());
+    result_vector_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("single NULL quoted not treated as empty") {
+    test = "{\"NULL\"}";
+    auto view = psql_array_view_no_unescape<true, true, true>(test.c_str());
     result_vector_t values{view.begin(), view.end()};
     actual_values = {{"NULL", false}};
     REQUIRE (values == actual_values);
@@ -443,9 +459,17 @@ TEST_CASE("test psql_array_view_no_unescape no null", "[nodb]") {
 
   SECTION("NULL nonull view") {
     test = "{NULL}";
-    auto view = psql_array_view_no_unescape<false>(test.c_str());
+    auto view = psql_array_view_no_unescape<false, true, false>(test.c_str());
     result_vector_nonull_t values{view.begin(), view.end()};
     actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("single NULL treated as empty") {
+    test = "{NULL}";
+    auto view = psql_array_view_no_unescape<false, true, true>(test.c_str());
+    result_vector_nonull_t values{view.begin(), view.end()};
+    actual_values = {};
     REQUIRE (values == actual_values);
   }
 
@@ -460,6 +484,14 @@ TEST_CASE("test psql_array_view_no_unescape no null", "[nodb]") {
   SECTION("NULL quoted") {
     test = "{\"NULL\"}";
     auto view = psql_array_view_no_unescape<false>(test.c_str());
+    result_vector_nonull_t values{view.begin(), view.end()};
+    actual_values = {{"NULL", false}};
+    REQUIRE (values == actual_values);
+  }
+
+  SECTION("single NULL quoted not treated as empty") {
+    test = "{\"NULL\"}";
+    auto view = psql_array_view_no_unescape<false, true, true>(test.c_str());
     result_vector_nonull_t values{view.begin(), view.end()};
     actual_values = {{"NULL", false}};
     REQUIRE (values == actual_values);

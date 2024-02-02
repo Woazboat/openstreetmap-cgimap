@@ -57,7 +57,7 @@ void extract_changesets(
 // https://www.postgresql.org/docs/current/static/arrays.html#ARRAYS-IO
 std::vector<std::string> psql_array_to_vector(std::string_view str);
 
-template<bool _CanBeNull = true, bool _CanBeEscaped = true>
+template<bool _CanBeNull = true, bool _CanBeEscaped = true, bool _TreatSingleNullAsEmpty = false>
 class psql_array_view_no_unescape
 {
 public:
@@ -191,7 +191,13 @@ public:
               }
             }
 
-            auto sv = std::string_view{e_start, static_cast<size_t>(len)};
+            std::string_view sv{e_start, static_cast<size_t>(len)};
+            if constexpr (_TreatSingleNullAsEmpty) {
+              if (*i == brace_close_char && *str == brace_open_char && sv == null_literal) {
+                return {};
+              }
+            }
+
             if constexpr (_CanBeNull) {
               if (sv == null_literal) {
                 if constexpr (_CanBeEscaped) {
