@@ -259,7 +259,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_node_history", "[historic][db]" ) {
       
       INSERT INTO node_tags(node_id, version, k, v)
       VALUES (3, 1, 'key1_1', 'value1'),
-             (3, 1, 'key1_2', 'value2'),
+             (3, 1, 'key1_2', 'val\ue2'),
              (3, 1, 'key1_3', 'value3'),
              (3, 2, 'key2_1', 'value4'),
              (3, 2, 'key2_2', 'value5');
@@ -279,7 +279,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_node_history", "[historic][db]" ) {
         element_info(3, 1, 2, "2015-03-02T18:27:00Z", 1, std::string("user_1"), true),
         0.0, 0.0,
         tags_t( { { "key1_1", "value1" },
-                  { "key1_2", "value2" },
+                  { "key1_2", "val\\ue2" },
                   { "key1_3", "value3" } })
         ) == f.m_nodes[0]);
     CHECK(
@@ -322,7 +322,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_way_history", "[historic][db]" ) {
       
       INSERT INTO way_tags(way_id, version, k, v)
       VALUES (1, 1, 'key1_1', 'value1'),
-             (1, 1, 'key1_2', 'value2'),
+             (1, 1, 'key1_2', 'val\ue2'),
              (1, 1, 'key1_3', 'value3'),
              (1, 2, 'key2_1', 'value4'),
              (1, 2, 'key2_2', 'value5');
@@ -343,7 +343,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_way_history", "[historic][db]" ) {
         element_info(1, 1, 3, "2016-09-06T19:54:00Z", 1, std::string("user_1"), true),
         {3, 2},
         tags_t( { { "key1_1", "value1" },
-                  { "key1_2", "value2" },
+                  { "key1_2", "val\\ue2" },
                   { "key1_3", "value3" } })
         ) == f.m_ways[0]);
 
@@ -374,7 +374,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_relation_history", "[historic][db]"
       VALUES (1, 3, '2016-09-19T18:49:00Z', TRUE, 2);
       
       INSERT INTO current_relation_members (relation_id, member_type, member_id, member_role, sequence_id)
-      VALUES (1, 'Node', 3, 'foo', 1);
+      VALUES (1, 'Node', 3, 'fo\o', 1);
       
       INSERT INTO relations (relation_id, changeset_id, "timestamp", visible, version, redaction_id)
       VALUES (1, 3, '2016-09-19T18:49:00Z', TRUE, 2, NULL),
@@ -382,11 +382,11 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_relation_history", "[historic][db]"
       
       INSERT INTO relation_members (relation_id, member_type, member_id, member_role, sequence_id, version)
       VALUES (1, 'Node', 3, 'foo', 1, 2),
-             (1, 'Node', 3, 'bar', 1, 1);
+             (1, 'Node', 3, 'b\ar', 1, 1);
       
       INSERT INTO relation_tags(relation_id, version, k, v)
       VALUES (1, 1, 'key1_1', 'value1'),
-             (1, 1, 'key1_2', 'value2'),
+             (1, 1, 'key1_2', 'val\ue2'),
              (1, 1, 'key1_3', 'value3'),
              (1, 2, 'key2_1', 'value4'),
              (1, 2, 'key2_2', 'value5');
@@ -401,7 +401,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_relation_history", "[historic][db]"
     // check number of relations written"
     CHECK(f.m_relations.size() == 2);
 
-    members_t relation1v1_members{member_info(element_type_node, 3, "bar")};
+    members_t relation1v1_members{member_info(element_type_node, 3, "b\\ar")};
     members_t relation1v2_members{member_info(element_type_node, 3, "foo")};
 
     CHECK(
@@ -409,7 +409,7 @@ TEST_CASE_METHOD(DatabaseTestsFixture, "test_relation_history", "[historic][db]"
         element_info(1, 1, 3, "2016-09-19T18:48:00Z", 1, std::string("user_1"), true),
         relation1v1_members,
         tags_t( { { "key1_1", "value1" },
-                  { "key1_2", "value2" },
+                  { "key1_2", "val\\ue2" },
                   { "key1_3", "value3" } })
         ) == f.m_relations[0]);
 
