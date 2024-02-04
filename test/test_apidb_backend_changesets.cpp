@@ -128,7 +128,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset", "[changeset][db]" ) {
     tdb.run_sql(
       "INSERT INTO users (id, email, pass_crypt, creation_time, display_name, data_public) "
       "VALUES "
-      "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'user_1', true); "
+      "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'test, \"user1\" \\name', true); "
 
       "INSERT INTO changesets (id, user_id, created_at, closed_at, num_changes) "
       "VALUES "
@@ -155,7 +155,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset", "[changeset][db]" ) {
           "2013-11-14T02:10:00Z", // created_at
           "2013-11-14T03:10:00Z", // closed_at
           1, // uid
-          std::string("user_1"), // display_name
+          std::string(R"(test, "user1" \name)"), // display_name
           {}, // bounding box
           2, // num_changes
           0 // comments_count
@@ -224,7 +224,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_tags", "[changeset]
     tdb.run_sql(
       "INSERT INTO users (id, email, pass_crypt, creation_time, display_name, data_public) "
       "VALUES "
-      "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'user_1', true); "
+      "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'test, \"user1\" n\\ame', true); "
 
       "INSERT INTO changesets (id, user_id, created_at, closed_at, num_changes) "
       "VALUES "
@@ -232,7 +232,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_tags", "[changeset]
 
       "INSERT INTO changeset_tags (changeset_id, k, v) "
       "VALUES "
-      "  (2, 'test_key', 'test_value'), "
+      "  (2, '\"test\",_\\key', '\"test\",_\\value'), "
       "  (2, 'test_key2', 'test_value2'); "
       );
   }
@@ -249,7 +249,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_tags", "[changeset]
     REQUIRE(f.m_changesets.size() == 1);
 
     tags_t tags;
-    tags.push_back(std::make_pair("test_key", "test_value"));
+    tags.push_back(std::make_pair(R"("test",_\key)", R"("test",_\value)"));
     tags.push_back(std::make_pair("test_key2", "test_value2"));
     REQUIRE(
       f.m_changesets.front() ==
@@ -259,7 +259,7 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_tags", "[changeset]
           "2013-11-14T02:10:00Z", // created_at
           "2013-11-14T03:10:00Z", // closed_at
           1, // uid
-          std::string("user_1"), // display_name
+          std::string(R"(test, "user1" n\ame)"), // display_name
           {}, // bounding box
           1, // num_changes
           0 // comments_count
@@ -294,9 +294,9 @@ void check_changeset_with_comments_impl(
     changeset_comment_info comment;
     comment.id = 1;
     comment.author_id = 3;
-    comment.body = "a nice comment!";
+    comment.body = R"(a, "nice" \comment!)";
     comment.created_at = "2015-09-05T20:37:01Z";
-    comment.author_display_name = "user_3";
+    comment.author_display_name = R"(test, "user" n\ame3)";
     comments.push_back(comment);
   }
   // note that we don't see the non-visible one in the database.
@@ -308,7 +308,7 @@ void check_changeset_with_comments_impl(
         "2013-11-14T02:10:00Z", // created_at
         "2013-11-14T03:10:00Z", // closed_at
         1, // uid
-        std::string("user_1"), // display_name
+        std::string(R"(test, "user" n\ame1)"), // display_name
         {}, // bounding box
         0, // num_changes
         1 // comments_count
@@ -328,8 +328,8 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_comments", "[change
       tdb.run_sql(
         "INSERT INTO users (id, email, pass_crypt, creation_time, display_name, data_public) "
         "VALUES "
-        "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'user_1', true), "
-        "  (3, 'user_3@example.com', '', '2015-09-05T20:37:00Z', 'user_3', true); "
+        "  (1, 'user_1@example.com', '', '2013-11-14T02:10:00Z', 'test, \"user\" n\\ame1', true), "
+        "  (3, 'user_3@example.com', '', '2015-09-05T20:37:00Z', 'test, \"user\" n\\ame3', true); "
 
         "INSERT INTO changesets (id, user_id, created_at, closed_at, num_changes) "
         "VALUES "
@@ -337,8 +337,8 @@ TEST_CASE_METHOD( DatabaseTestsFixture, "test_changeset_with_comments", "[change
 
         "INSERT INTO changeset_comments (id, changeset_id, author_id, body, created_at, visible) "
         "VALUES "
-        "  (1, 3, 3, 'a nice comment!', '2015-09-05T20:37:01Z', true), "
-        "  (2, 3, 3, 'a nasty comment', '2015-09-05T20:37:10Z', false); "
+        "  (1, 3, 3, 'a, \"nice\" \\comment!', '2015-09-05T20:37:01Z', true), "
+        "  (2, 3, 3, 'a, \"nasty\" \\comment', '2015-09-05T20:37:10Z', false); "
         );
   }
 

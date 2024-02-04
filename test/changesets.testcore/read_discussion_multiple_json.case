@@ -22,7 +22,7 @@ Cache-Control: private, max-age=0, must-revalidate
 		"open": false,
 		"user": "FakeUser1",
 		"uid": 1,
-		"comments_count": 3,
+		"comments_count": 5,
 		"changes_count": 0,
 		"discussion": [{
 			"id": 2,
@@ -42,6 +42,18 @@ Cache-Control: private, max-age=0, must-revalidate
 			"uid": 1,
 			"user": "FakeUser1",
 			"text": "because"
+		},{
+			"id": 5,
+			"date": "2020-01-04T13:00:00Z",
+			"uid": 1,
+			"user": "FakeUser1",
+			"text": "esc\"aping\" \\\\t\\est"
+		},{
+			"id": 6,
+			"date": "2020-01-04T14:00:00Z",
+			"uid": 1,
+			"user": "FakeUser1",
+			"text": "\"quote test\""
 		}]
 	}]
 }
