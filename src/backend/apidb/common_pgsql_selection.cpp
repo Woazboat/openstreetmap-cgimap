@@ -12,7 +12,8 @@
 #include "cgimap/backend/apidb/utils.hpp"
 
 #include <chrono>
-
+#include <iterator>
+#include <charconv>
 
 namespace {
 
@@ -82,25 +83,42 @@ void extract_changeset(const pqxx_tuple &row,
   elem.num_changes = row["num_changes"].as<size_t>();
 }
 
-void extract_tags(const pqxx_tuple &row, tags_t &tags) {
-  tags.clear();
+tags_t extract_tags(const pqxx_tuple &row) {
+  tags_t tags;
 
-  auto keys   = psql_array_to_vector(row["tag_k"].c_str());
-  auto values = psql_array_to_vector(row["tag_v"].c_str());
+  auto keys = psql_array_view_no_unescape<false, true, true>(row["tag_k"].c_str());
+  auto values = psql_array_view_no_unescape<false, true, true>(row["tag_v"].c_str());
 
-  if (keys.size()!=values.size()) {
+  auto k_it = keys.begin();
+  auto v_it = values.begin();
+
+  for (; k_it != keys.end() && v_it != values.end(); ++k_it, ++v_it) {
+    auto [k_sv, k_esc] = *k_it;
+    auto [v_sv, v_esc] = *v_it;
+    tags.emplace_back(k_esc ? unescape(k_sv) : k_sv,
+                      v_esc ? unescape(v_sv) : v_sv);
+  }
+
+  if (k_it != keys.end() || v_it != values.end()) {
     throw std::runtime_error("Mismatch in tags key and value size");
   }
 
-  for(std::size_t i=0; i<keys.size(); i++)
-     tags.push_back(std::make_pair(keys[i], values[i]));
+  return tags;
 }
 
-void extract_nodes(const pqxx_tuple &row, nodes_t &nodes) {
-  nodes.clear();
-  auto ids = psql_array_to_vector(row["node_ids"].c_str());
-  for (const auto & id : ids)
-    nodes.push_back(std::stol(id));
+nodes_t extract_nodes(const pqxx_tuple &row) {
+  nodes_t nodes;
+
+  auto ids = psql_array_view_no_unescape<false, false>(row["node_ids"].c_str());
+  for (const auto id_str : ids) {
+    osm_nwr_id_t id = 0;
+    auto [ptr, ec] = std::from_chars(id_str.begin(), id_str.begin() + id_str.size(), id);
+    if (ec != std::errc())
+      throw std::runtime_error("Failed to convert node id to integer.");
+    nodes.push_back(id);
+  }
+
+  return nodes;
 }
 
 element_type type_from_name(const char *name) {
@@ -131,49 +149,94 @@ element_type type_from_name(const char *name) {
   return type;
 }
 
-void extract_members(const pqxx_tuple &row, members_t &members) {
-  member_info member;
-  members.clear();
+element_type type_from_name(std::string_view name) {
+  if (name.size() == 0)
+    throw std::runtime_error("Type name is empty");
+  return type_from_name(name.data());
+}
 
-  auto types = psql_array_to_vector(row["member_types"].c_str());
-  auto ids   = psql_array_to_vector(row["member_ids"].c_str());
-  auto roles = psql_array_to_vector(row["member_roles"].c_str());
+[[nodiscard]] members_t extract_members(const pqxx_tuple &row) {
+  members_t members;
 
-  if (types.size()!=ids.size() || ids.size()!=roles.size()) {
+  auto types = psql_array_view_no_unescape<false, false>(row["member_types"].c_str());
+  auto ids = psql_array_view_no_unescape<false, false>(row["member_ids"].c_str());
+  auto roles = psql_array_view_no_unescape<false>(row["member_roles"].c_str());
+
+  auto t_it = types.begin();
+  auto i_it = ids.begin();
+  auto r_it = roles.begin();
+  for (; t_it != types.end() && i_it != ids.end() && r_it != roles.end(); ++t_it, ++i_it, ++r_it) {
+    auto id_str = *i_it;
+    osm_nwr_id_t id = 0;
+    auto [ptr, ec] = std::from_chars(id_str.begin(), id_str.begin() + id_str.size(), id);
+    if (ec != std::errc())
+      throw std::runtime_error("Failed to convert member ref id to integer.");
+
+    auto [role_sv, escaped] = *r_it;
+    members.emplace_back(type_from_name(*t_it), id, escaped ? unescape(role_sv) : std::string(role_sv));
+  }
+
+  if (t_it != types.end() || i_it != ids.end() || r_it != roles.end()) {
     throw std::runtime_error("Mismatch in members types, ids and roles size");
   }
 
-  for (std::size_t i=0; i<ids.size(); i++) {
-    member.type = type_from_name(types[i].c_str());
-    member.ref = std::stol(ids[i]);
-    member.role = roles[i];
-    members.push_back(member);
-  }
+  return members;
 }
 
-void extract_comments(const pqxx_tuple &row, comments_t &comments) {
-  changeset_comment_info comment;
-  comments.clear();
+comments_t extract_comments(const pqxx_tuple &row) {
+  comments_t comments;
 
-  auto id           = psql_array_to_vector(row["comment_id"].c_str());
-  auto author_id    = psql_array_to_vector(row["comment_author_id"].c_str());
-  auto display_name = psql_array_to_vector(row["comment_display_name"].c_str());
-  auto body         = psql_array_to_vector(row["comment_body"].c_str());
-  auto created_at   = psql_array_to_vector(row["comment_created_at"].c_str());
+  auto id_array           = psql_array_view_no_unescape<false, false, true>(row["comment_id"].c_str());
+  auto author_id_array    = psql_array_view_no_unescape<false, false, true>(row["comment_author_id"].c_str());
+  auto display_name_array = psql_array_view_no_unescape<false, true, true>(row["comment_display_name"].c_str());
+  auto body_array         = psql_array_view_no_unescape<false, true, true>(row["comment_body"].c_str());
+  auto created_at_array   = psql_array_view_no_unescape<false, false, true>(row["comment_created_at"].c_str());
 
-  if (id.size()!=author_id.size() || author_id.size()!=display_name.size()
-      || display_name.size()!=body.size() || body.size()!=created_at.size()) {
+  auto id_it           = id_array.begin();
+  auto author_id_it    = author_id_array.begin();
+  auto display_name_it = display_name_array.begin();
+  auto body_it         = body_array.begin();
+  auto created_at_it   = created_at_array.begin();
+
+  for (; id_it != id_array.end() &&
+         author_id_it != author_id_array.end() &&
+         display_name_it != display_name_array.end() &&
+         body_it != body_array.end() &&
+         created_at_it != created_at_array.end();
+         ++id_it, ++author_id_it, ++display_name_it, ++body_it, ++created_at_it) {
+
+    auto id_sv = *id_it;
+    osm_changeset_comment_id_t id = 0;
+    auto [ptr1, ec1] = std::from_chars(id_sv.begin(), id_sv.begin() + id_sv.size(), id);
+    if (ec1 != std::errc())
+      throw std::runtime_error("Failed to convert comment id to integer.");
+
+    auto author_id_sv = *author_id_it;
+    osm_user_id_t author_id = 0;
+    auto [ptr2, ec2] = std::from_chars(author_id_sv.begin(), author_id_sv.begin() + author_id_sv.size(), author_id);
+    if (ec2 != std::errc())
+      throw std::runtime_error("Failed to convert comment author id to integer.");
+
+    auto [author_name_sv, author_name_esc] = *display_name_it;
+    auto [body_sv, body_esc] = *body_it;
+
+    comments.emplace_back(id, 
+                          author_id, 
+                          body_esc ? unescape(body_sv) : std::string(body_sv),
+                          std::string(*created_at_it),
+                          author_name_esc ? unescape(author_name_sv) : std::string(author_name_sv)
+                          );
+  }
+
+    if (id_it != id_array.end() ||
+        author_id_it != author_id_array.end() ||
+        display_name_it != display_name_array.end() ||
+        body_it != body_array.end() ||
+        created_at_it != created_at_array.end()) {
     throw std::runtime_error("Mismatch in comments author_id, display_name, body and created_at size");
   }
 
-  for (std::size_t i=0; i<id.size(); i++) {
-    comment.id = std::stol(id[i]);
-    comment.author_id = std::stol(author_id[i]);
-    comment.author_display_name = display_name[i];
-    comment.body = body[i];
-    comment.created_at = created_at[i];
-    comments.push_back(comment);
-  }
+  return comments;
 }
 
 struct node {
@@ -195,7 +258,7 @@ struct way {
   struct extra_info {
     nodes_t nodes;
     inline void extract(const pqxx_tuple &row) {
-      extract_nodes(row, nodes);
+      nodes = extract_nodes(row);
     }
   };
   static inline void write(
@@ -209,7 +272,7 @@ struct relation {
   struct extra_info {
     members_t members;
     inline void extract(const pqxx_tuple &row) {
-      extract_members(row, members);
+      members = extract_members(row);
     }
   };
   static inline void write(
@@ -227,12 +290,11 @@ void extract(
 
   element_info elem;
   typename T::extra_info extra;
-  tags_t tags;
 
   for (const auto &row : rows) {
     extract_elem(row, elem, cc);
     extra.extract(row);
-    extract_tags(row, tags);
+    tags_t tags = extract_tags(row);
     if (notify)
       notify(elem);     // let callback function know about a new element we're processing
     T::write(formatter, elem, extra, tags);
@@ -270,13 +332,11 @@ void extract_changesets(
   bool include_changeset_discussions) {
 
   changeset_info elem;
-  tags_t tags;
-  comments_t comments;
 
   for (const auto &row : rows) {
     extract_changeset(row, elem, cc);
-    extract_tags(row, tags);
-    extract_comments(row, comments);
+    tags_t tags = extract_tags(row);
+    comments_t comments = extract_comments(row);
     elem.comments_count = comments.size();
     formatter.write_changeset(
       elem, tags, include_changeset_discussions, comments, now);
