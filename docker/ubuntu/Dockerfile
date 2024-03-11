@@ -9,7 +9,7 @@ RUN apt-get update -qq && \
        libboost-program-options-dev \
        libcrypto++-dev libyajl-dev \
        libpqxx-dev zlib1g-dev libargon2-dev libfmt-dev \
-       postgresql-12 postgresql-server-dev-all \
+       postgresql-12 postgresql-server-dev-all dpkg-dev file \
        --no-install-recommends && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -23,6 +23,7 @@ COPY . ./
 RUN mkdir build && cd build && \
      CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter" cmake .. -DBUILD_SHARED_LIBS=OFF -DENABLE_FMT_HEADER=OFF -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release && \
      make -j${nproc} && \
+     cmake --build . -t package && \
      ctest --output-on-failure && \
      strip openstreetmap-cgimap && \
      cp openstreetmap-cgimap ../
