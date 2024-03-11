@@ -31,15 +31,13 @@ RUN mkdir build && cd build && \
 
 FROM ubuntu:20.04
 
-RUN apt-get update -qq && \
-    apt-get install -y \
-       libfcgi-bin libmemcached11 libboost-locale1.71.0 libboost-program-options1.71.0 \
-       libxml2 libcrypto++6 libyajl2 libpqxx-6.4 zlib1g libargon2-1 \
-       --no-install-recommends && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/build/*.deb /app_deb/
 
-COPY --from=builder /app/openstreetmap-cgimap /usr/local/bin
+RUN apt-get update -qq && \
+    apt install --no-install-recommends -y /app_deb/*.deb && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -r /app_deb
 
 RUN groupadd -g 61000 cgimap && \
     useradd -g 61000 -l -M -s /bin/false -u 61000 cgimap
