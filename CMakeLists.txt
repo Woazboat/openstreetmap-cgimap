@@ -187,7 +187,7 @@ if (ENABLE_INSTALL)
     set(CGIMAP_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
     if (BUILD_SHARED_LIBS)
-        set(CGIMAP_LIBS cgimap_core cgimap_fcgi libxml++)
+        set(CGIMAP_LIBS cgimap_core cgimap_fcgi cgimap_libxml++)
 
         if (ENABLE_APIDB)
             list(APPEND CGIMAP_LIBS cgimap_apidb)
