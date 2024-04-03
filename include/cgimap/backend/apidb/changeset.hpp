@@ -28,7 +28,7 @@ struct changeset {
 
   changeset() = default;
 
-  changeset(bool dp, const std::string &dn, osm_user_id_t id);
+  changeset(bool data_public, std::string display_name, osm_user_id_t user_id);
 };
 
 

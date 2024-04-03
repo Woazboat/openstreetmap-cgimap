@@ -63,7 +63,7 @@ bool operator<(const element &a, const element &b) {
 
 struct sorting_formatter : public output_formatter {
 
-  virtual ~sorting_formatter() override = default;
+  ~sorting_formatter() override = default;
 
   mime::type mime_type() const override {
     throw std::runtime_error("sorting_formatter::mime_type unimplemented");

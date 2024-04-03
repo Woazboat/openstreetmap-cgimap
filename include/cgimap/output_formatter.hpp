@@ -63,7 +63,7 @@ struct element_info {
 
   element_info(osm_nwr_id_t id_, osm_nwr_id_t version_,
                osm_changeset_id_t changeset_,
-               const std::string &timestamp_,
+               std::string timestamp_,
                const std::optional<osm_user_id_t> &uid_,
                const std::optional<std::string> &display_name_,
                bool visible_,
@@ -89,8 +89,8 @@ struct changeset_info {
   changeset_info() = default;
   changeset_info(const changeset_info &) = default;
   changeset_info(osm_changeset_id_t id_,
-                 const std::string &created_at_,
-                 const std::string &closed_at_,
+                 std::string created_at_,
+                 std::string closed_at_,
                  const std::optional<osm_user_id_t> &uid_,
                  const std::optional<std::string> &display_name_,
                  const std::optional<bbox> &bounding_box_,

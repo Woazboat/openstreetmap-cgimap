@@ -99,7 +99,7 @@ private:
   void lock_current_ways(const std::vector<osm_nwr_id_t> &ids);
 
   std::vector<std::vector<ApiDB_Way_Updater::way_t> >
-  build_packages(const std::vector<way_t> &ways);
+  build_packages(const std::vector<way_t> &ways) const;
 
   void check_current_way_versions(const std::vector<way_t> &ways);
 
@@ -127,7 +127,7 @@ private:
 
   void delete_current_way_tags(const std::vector<osm_nwr_id_t> &ids);
 
-  void delete_current_way_nodes(std::vector<osm_nwr_id_t> ids);
+  void delete_current_way_nodes(const std::vector<osm_nwr_id_t> &ids);
 
   Transaction_Manager &m;
   api06::OSMChange_Tracking &ct;

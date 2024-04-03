@@ -164,7 +164,7 @@ namespace basicauth {
       return {};
     }
 
-    auto pos = auth.find(":");
+    auto pos = auth.find(':');
 
     if (pos == std::string::npos)
       return {};

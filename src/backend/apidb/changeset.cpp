@@ -7,18 +7,9 @@
  * For a full list of authors see the git log.
  */
 
-#include "cgimap/backend/apidb/pqxx_string_traits.hpp"
 #include "cgimap/backend/apidb/changeset.hpp"
-#include "cgimap/logger.hpp"
-#include "cgimap/http.hpp"
-#include <map>
-#include <fmt/core.h>
+#include <utility>
 
-using std::string;
-
-
-changeset::changeset(bool dp, const string &dn, osm_user_id_t id)
-    : data_public(dp), display_name(dn), user_id(id) {}
-
-
+changeset::changeset(bool data_public, std::string display_name, osm_user_id_t user_id)
+    : data_public(data_public), display_name(std::move(display_name)), user_id(user_id) {}
 

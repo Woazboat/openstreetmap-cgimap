@@ -445,7 +445,7 @@ void ApiDB_Way_Updater::lock_current_ways(
  */
 
 std::vector<std::vector<ApiDB_Way_Updater::way_t>>
-ApiDB_Way_Updater::build_packages(const std::vector<way_t> &ways) {
+ApiDB_Way_Updater::build_packages(const std::vector<way_t> &ways) const {
 
   std::vector<std::vector<ApiDB_Way_Updater::way_t>> result;
 
@@ -942,7 +942,7 @@ void ApiDB_Way_Updater::delete_current_way_tags(
 }
 
 void ApiDB_Way_Updater::delete_current_way_nodes(
-    std::vector<osm_nwr_id_t> ids) {
+    const std::vector<osm_nwr_id_t> &ids) {
 
   if (ids.empty())
     return;
