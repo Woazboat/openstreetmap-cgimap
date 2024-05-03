@@ -158,7 +158,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_nodes
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_nodes>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_nodes>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
 
         ###########################
@@ -179,7 +179,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_oauth2
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_oauth2>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_oauth2>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
 
         #############################
@@ -200,7 +200,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_historic
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_historic>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_historic>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
 
         ###############################
@@ -221,7 +221,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_changesets
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_changesets>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_changesets>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
 
         ########################################
@@ -242,7 +242,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_changeset_downloads
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_changeset_downloads>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_changeset_downloads>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
 
         ######################################
@@ -263,7 +263,7 @@ if(BUILD_TESTING)
             catch2)
 
         add_test(NAME test_apidb_backend_changeset_uploads
-            COMMAND pg_virtualenv "$<TARGET_FILE:test_apidb_backend_changeset_uploads>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
+            COMMAND pg_virtualenv -i "--encoding=UTF8" "$<TARGET_FILE:test_apidb_backend_changeset_uploads>" --db-schema "${CMAKE_CURRENT_SOURCE_DIR}/structure.sql")
 
     # define check alias target for autotools compatibility
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
