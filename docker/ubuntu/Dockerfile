@@ -9,7 +9,7 @@ RUN apt-get update -qq && \
        libboost-program-options-dev \
        libcrypto++-dev libyajl-dev \
        libpqxx-dev zlib1g-dev libfmt-dev \
-       postgresql-12 postgresql-server-dev-all \
+       postgresql-14 postgresql-server-dev-all \
        --no-install-recommends && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
