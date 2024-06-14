@@ -23,6 +23,7 @@ target_sources(cgimap_core PRIVATE
     osm_diffresult_responder.cpp
     osmchange_responder.cpp
     output_formatter.cpp
+    plugin_registry.cpp
     process_request.cpp
     rate_limiter.cpp
     request.cpp
@@ -68,6 +69,8 @@ target_sources(cgimap_core PRIVATE
 
     $<$<BOOL:${ENABLE_YAJL}>:json_formatter.cpp>
     $<$<BOOL:${ENABLE_YAJL}>:json_writer.cpp>
+
+    plugins/hooks.cpp
 )
 
 target_link_libraries(cgimap_core

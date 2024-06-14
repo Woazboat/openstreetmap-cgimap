@@ -48,7 +48,7 @@ else()
     option(BUILD_TESTING "Compile test suite" OFF)
 endif()
 
-
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(CTest)
 include(AutotoolsCompatibilityDefinitions)
@@ -60,6 +60,8 @@ include(BuildLint)
 add_library(cgimap_common_compiler_options INTERFACE)
 
 target_compile_features(cgimap_common_compiler_options INTERFACE cxx_std_17)
+target_compile_options(cgimap_common_compiler_options INTERFACE -rdynamic)
+target_link_options(cgimap_common_compiler_options INTERFACE -rdynamic)
 target_compile_definitions(cgimap_common_compiler_options INTERFACE CMAKE=1)
 target_add_autotools_compatibility_definitions(cgimap_common_compiler_options)
 
@@ -122,7 +124,7 @@ target_link_libraries(cgimap_common_compiler_options INTERFACE
 add_subdirectory(contrib)
 add_subdirectory(src)
 add_subdirectory(test)
-
+add_subdirectory(plugins)
 
 #################################
 # openstreetmap-cgimap executable
@@ -134,13 +136,15 @@ set_target_properties(openstreetmap_cgimap PROPERTIES
 target_sources(openstreetmap_cgimap PRIVATE
     src/main.cpp)
 
-target_link_libraries(openstreetmap_cgimap
+target_link_libraries(openstreetmap_cgimap PRIVATE
     cgimap_common_compiler_options
     cgimap_core
     cgimap_fcgi
     cgimap_apidb
     Boost::program_options
     PQXX::PQXX)
+
+file(GENERATE OUTPUT lighttpd.conf INPUT lighttpd.conf.in TARGET openstreetmap_cgimap)
 
 
 #############################################################

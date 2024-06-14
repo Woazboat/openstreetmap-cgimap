@@ -56,6 +56,7 @@ public:
 private:
   bbox_t m_bbox{};
 
+public:
   struct way_node_t {
     osm_nwr_id_t node_id;
     osm_sequence_id_t sequence_id;
@@ -71,6 +72,7 @@ private:
     std::vector<way_node_t> way_nodes;
     bool if_unused;
   };
+private:
 
   void truncate_temporary_tables();
 

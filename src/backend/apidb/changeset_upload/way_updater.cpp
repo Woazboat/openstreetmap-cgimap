@@ -15,6 +15,7 @@
 #include "cgimap/logger.hpp"
 #include "cgimap/options.hpp"
 #include "cgimap/util.hpp"
+#include "cgimap/plugins/hooks.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -26,6 +27,7 @@
 #include <vector>
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
 
 
@@ -39,6 +41,8 @@ void ApiDB_Way_Updater::add_way(osm_changeset_id_t changeset_id,
                                 osm_nwr_signed_id_t old_id,
                                 const api06::WayNodeList &nodes,
                                 const api06::TagList &tags) {
+
+  fmt::print(FMT_COMPILE("ApiDB_Way_Updater::add_way(changeset={}, old_id={}, tags={})\n"), changeset_id, old_id, tags);
 
   way_t new_way{};
   new_way.version = 1;
@@ -58,6 +62,12 @@ void ApiDB_Way_Updater::add_way(osm_changeset_id_t changeset_id,
     new_way.way_nodes.push_back(
         { (node < 0 ? 0 : static_cast<osm_nwr_id_t>(node)), ++node_seq, node });
 
+  auto hook_action = Hooks::call<Hooks::Hook::WAY_CREATED>(new_way);
+  if (hook_action == Hooks::HookAction::ABORT)
+  {
+    throw http::bad_request("Way creation rejected");
+  }
+
   create_ways.push_back(new_way);
 
   ct.osmchange_orig_sequence.push_back({ operation::op_create,
@@ -69,6 +79,7 @@ void ApiDB_Way_Updater::modify_way(osm_changeset_id_t changeset_id,
                                    osm_nwr_id_t id, osm_version_t version,
                                    const api06::WayNodeList &nodes,
                                    const api06::TagList &tags) {
+  fmt::print(FMT_COMPILE("ApiDB_Way_Updater::modify_way(changeset={}, id={}, version={}, tags={})\n"), changeset_id, id, version, tags);
 
   way_t modify_way{};
   modify_way.id = id;
@@ -89,6 +100,12 @@ void ApiDB_Way_Updater::modify_way(osm_changeset_id_t changeset_id,
     modify_way.way_nodes.push_back(
         { (node < 0 ? 0 : static_cast<osm_nwr_id_t>(node)), ++node_seq, node });
 
+  auto hook_action = Hooks::call<Hooks::Hook::WAY_MODIFIED>(modify_way);
+  if (hook_action == Hooks::HookAction::ABORT)
+  {
+    throw http::bad_request("Way modification rejected");
+  }
+
   modify_ways.push_back(modify_way);
 
   ct.osmchange_orig_sequence.push_back({ operation::op_modify,
@@ -100,12 +117,21 @@ void ApiDB_Way_Updater::delete_way(osm_changeset_id_t changeset_id,
                                    osm_nwr_id_t id, osm_version_t version,
                                    bool if_unused) {
 
+  fmt::print(FMT_COMPILE("ApiDB_Way_Updater::delete_way(changeset={}, id={}, version={})\n"), changeset_id, id, version);
+
   way_t delete_way{};
   delete_way.id = id;
   delete_way.old_id = id;
   delete_way.version = version;
   delete_way.changeset_id = changeset_id;
   delete_way.if_unused = if_unused;
+
+  auto hook_action = Hooks::call<Hooks::Hook::WAY_DELETED>(delete_way);
+  if (hook_action == Hooks::HookAction::ABORT)
+  {
+    throw http::bad_request("Way deletion rejected");
+  }
+
   delete_ways.push_back(delete_way);
 
   ct.osmchange_orig_sequence.push_back({ operation::op_delete,

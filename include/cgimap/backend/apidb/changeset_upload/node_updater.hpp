@@ -51,6 +51,7 @@ public:
 private:
   bbox_t m_bbox{};
 
+public:
   struct node_t {
     osm_nwr_id_t id;
     osm_version_t version;
@@ -62,6 +63,7 @@ private:
     std::vector<std::pair<std::string, std::string> > tags;
     bool if_unused;
   };
+private:
 
   void truncate_temporary_tables();
 

@@ -10,6 +10,7 @@
 #include "cgimap/http.hpp"
 #include "cgimap/logger.hpp"
 #include "cgimap/request_helpers.hpp"
+#include "cgimap/plugins/hooks.hpp"
 
 #include "cgimap/api06/changeset_create_handler.hpp"
 #include "cgimap/api06/changeset_upload/changeset_input_format.hpp"
@@ -35,6 +36,13 @@ changeset_create_responder::changeset_create_responder(mime::type mt,
 
   auto changeset_updater = upd.get_changeset_updater(changeset, *user_id);
   auto tags = ChangesetXMLParser().process_message(payload);
+
+  auto hook_action = Hooks::call<Hooks::Hook::CHANGESET_CREATE>(*user_id, tags);
+  if (hook_action == Hooks::HookAction::ABORT)
+  {
+    throw http::bad_request("Request rejected");
+  }
+
   changeset = changeset_updater->api_create_changeset(tags);
 
   output_text = std::to_string(changeset);

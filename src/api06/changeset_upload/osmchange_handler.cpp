@@ -45,6 +45,8 @@ void OSMChange_Handler::process_node(const Node &node,
 
   assert(op != operation::op_undefined);
 
+  fmt::print("OSMChange_Handler::process_node, {} {}:{}\n", osm_operation_name(op), node.id(), node.version());
+
   check_osm_object(node);
 
   switch (op) {
@@ -156,11 +158,13 @@ bbox_t OSMChange_Handler::get_bbox() const {
 }
 
 void OSMChange_Handler::handle_new_state(state new_state) {
-
+  
   // TODO: add flush_limit to send data to db if too much memory is used for
   // internal buffers
   if (new_state == current_state /* && object_counter < flush_limit */)
     return;
+  
+  fmt::print("OSMChange_Handler::handle_new_state() state change {} -> {}\n", (int)current_state, (int)new_state);
 
   // process objects in buffer for the current state before doing a transition
   // to the new state

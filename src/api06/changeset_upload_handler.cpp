@@ -23,6 +23,7 @@
 
 #include "cgimap/types.hpp"
 #include "cgimap/util.hpp"
+#include "cgimap/plugins/hooks.hpp"
 
 #include <string>
 
@@ -48,12 +49,19 @@ changeset_upload_responder::changeset_upload_responder(mime::type mt,
 
   OSMChangeXMLParser parser(handler);
 
+  // Changes are inserted in the database in chunks on the fly as they are parsed
   parser.process_message(payload);
 
   // store diffresult for output handling in class osm_diffresult_responder
   m_diffresult = change_tracking.assemble_diffresult();
 
   const auto new_changes = handler.get_num_changes();
+
+  auto hook_action = Hooks::call<Hooks::Hook::CHANGESET_UPLOAD>(*user_id, changeset, handler, change_tracking, m_diffresult);
+  if (hook_action == Hooks::HookAction::ABORT)
+  {
+    throw http::bad_request("Upload rejected");
+  }
 
   if (global_settings::get_ratelimiter_upload()) {
 

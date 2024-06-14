@@ -47,6 +47,8 @@ using namespace std::chrono_literals;
 #include "cgimap/options.hpp"
 #include "cgimap/process_request.hpp"
 #include "cgimap/backend/apidb/apidb.hpp"
+#include "cgimap/plugins/plugin_registry.hpp"
+#include "cgimap/plugins/hooks.hpp"
 
 
 namespace po = boost::program_options;
@@ -114,6 +116,7 @@ void get_options(int argc, char **argv, po::variables_map &options) {
     ("port", po::value<int>(), "FCGI port number (e.g. 8000) to listen on. This option is for backwards compatibility, please use --socket for new configurations.")
     ("socket", po::value<string>(), "FCGI port number (e.g. :8000, or 127.0.0.1:8000) or UNIX domain socket to listen on")
     ("configfile", po::value<string>(), "Config file")
+    ("plugin", po::value<std::vector<std::filesystem::path>>()->multitoken()->composing(), "plugin to load")
     ;
   // clang-format on
 
@@ -407,7 +410,6 @@ int init_socket(const po::variables_map &options)
 
 } // anonymous namespace
 
-
 int main(int argc, char **argv) {
   try {
     po::variables_map options;
@@ -421,8 +423,27 @@ int main(int argc, char **argv) {
     // set global_settings based on provided options
     global_settings::set_configuration(std::make_unique<global_settings_via_options>(options));
 
+    if (options.count("plugin")) {
+      try
+      {
+        for (const auto& plugin_path : options["plugin"].as<std::vector<std::filesystem::path>>())
+        {
+          plugin_registry.register_plugin(plugin_path);
+        }
+
+        plugin_registry.load_plugins();
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << "Error while loading plugins: " << e.what() << '\n';
+        throw;
+      }
+    }
+
     // get the socket to use
     auto socket = init_socket(options);
+
+    Hooks::call<Hooks::Hook::POST_SOCKET_INIT>(socket);
 
     // are we supposed to run as a daemon?
     if (options.count("daemon")) {

@@ -14,6 +14,7 @@
 #include "cgimap/choose_formatter.hpp"
 #include "cgimap/output_formatter.hpp"
 #include "cgimap/output_writer.hpp"
+#include "cgimap/plugins/hooks.hpp"
 
 #include <chrono>
 #include <memory>
@@ -279,6 +280,13 @@ process_post_put_request(request &req, const handler& handler,
     // Process request, perform database update
     {
       const auto payload = req.get_payload();
+
+      auto hook_action = Hooks::call<Hooks::Hook::WRITE_REQUEST>(req, payload, ip, user_id);
+      if (hook_action == Hooks::HookAction::ABORT)
+      {
+        throw http::bad_request("Request rejected");
+      }
+
       auto rw_transaction = update_factory.get_default_transaction();
       auto data_update = update_factory.make_data_update(*rw_transaction);
       check_db_readonly_mode(*data_update);
@@ -481,6 +489,12 @@ void process_request(request &req, rate_limiter &limiter,
     if (user_id) {
         client_key = (fmt::format("{}{}", user_prefix, (*user_id)));
         user_roles = selection->get_roles_for_user(*user_id);
+    }
+
+    auto hook_action = Hooks::call<Hooks::Hook::REQUEST_START>(req, user_id, user_roles);
+    if (hook_action == Hooks::HookAction::ABORT)
+    {
+      throw http::bad_request("Request rejected");
     }
 
     auto is_moderator = user_roles.count(osm_user_role_t::moderator) > 0;
