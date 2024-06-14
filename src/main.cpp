@@ -443,7 +443,7 @@ int main(int argc, char **argv) {
     // get the socket to use
     auto socket = init_socket(options);
 
-    Hooks::call<Hooks::Hook::POST_SOCKET_INIT>(socket);
+    Hook<HookId::POST_SOCKET_INIT>::call(socket);
 
     // are we supposed to run as a daemon?
     if (options.count("daemon")) {

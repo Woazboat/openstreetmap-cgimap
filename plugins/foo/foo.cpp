@@ -27,29 +27,29 @@ enum class ElementType
     RELATION
 };
 
-Hooks::HookAction tag_filter(ElementType element_type, const api06::TagList& tags)
+HookAction tag_filter(ElementType element_type, const api06::TagList& tags)
 {
     if ((tags.find("foo") != tags.end()) && (tags.at("foo") == "bar"))
     {
         fmt::print(FMT_COMPILE("Tag filter match: {}={}\n"), "foo", "bar");
-        return Hooks::HookAction::ABORT;
+        return HookAction::ABORT;
     }
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction tag_filter(ElementType element_type, const std::vector<std::pair<std::string, std::string> >& tags)
+HookAction tag_filter(ElementType element_type, const std::vector<std::pair<std::string, std::string> >& tags)
 {
     for (const auto& [key, value] : tags)
     {
         if (key == "foo" && value == "bar")
         {
             fmt::print(FMT_COMPILE("Tag filter match: {}={}\n"), "foo", "bar");
-            return Hooks::HookAction::ABORT;
+            return HookAction::ABORT;
         }
     }
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
 void foo_hook()
@@ -57,7 +57,7 @@ void foo_hook()
     fmt::print("foo hook\n");
 }
 
-Hooks::HookAction request_start_hook(const request& req, const std::optional<osm_user_id_t>& user_id, const std::set<osm_user_role_t>& roles)
+HookAction request_start_hook(const request& req, const std::optional<osm_user_id_t>& user_id, const std::set<osm_user_role_t>& roles)
 {
     const std::string ip = fcgi_get_env(req, "REMOTE_ADDR");
     const char *request_uri = req.get_param("REQUEST_URI");
@@ -76,29 +76,29 @@ Hooks::HookAction request_start_hook(const request& req, const std::optional<osm
     //     return Hooks::HookAction::ABORT; // TODO: testing
     // }
     
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction write_request_hook(const request& req, const std::string& payload, const std::string& ip, const std::optional<osm_user_id_t>& user_id)
+HookAction write_request_hook(const request& req, const std::string& payload, const std::string& ip, const std::optional<osm_user_id_t>& user_id)
 {
     const char *request_uri = req.get_param("REQUEST_URI");
     fmt::print(FMT_COMPILE("Write request hook: user id: {}, ip: {}, path: {}, payload: \n{}\n"), user_id.value_or(0), ip, request_uri, payload);    
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction changeset_create_hook(osm_user_id_t user_id, const api06::TagList& tags)
+HookAction changeset_create_hook(osm_user_id_t user_id, const api06::TagList& tags)
 {
     fmt::print(FMT_COMPILE("Changeset create hook: user id: {}, tags: {}\n"), user_id, tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult)
+HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult)
 {
     fmt::print(FMT_COMPILE("Changeset upload hook: user id: {}, changeset: {}\n"), user_id, changeset);
 
@@ -110,43 +110,43 @@ Hooks::HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_
         fmt::print(FMT_COMPILE("{}: {} {} -> {}:{}\n"), elt_type_name, op_name, d.old_id, d.new_id, d.new_version);
     }
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction new_node_hook(const ApiDB_Node_Updater::node_t& node)
+HookAction new_node_hook(const ApiDB_Node_Updater::node_t& node)
 {
     fmt::print(FMT_COMPILE("New node in changeset {}: {}/{}:{}, lat={}, lon={}, tags={}\n"), node.changeset_id, node.old_id, node.id, node.version, node.lat, node.lon, node.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, node.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction modified_node_hook(const ApiDB_Node_Updater::node_t& node)
+HookAction modified_node_hook(const ApiDB_Node_Updater::node_t& node)
 {
     fmt::print(FMT_COMPILE("Modified node in changeset {}: {}/{}:{}, lat={}, lon={}, tags={}\n"), node.changeset_id, node.old_id, node.id, node.version, node.lat, node.lon, node.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, node.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction deleted_node_hook(const ApiDB_Node_Updater::node_t& node)
+HookAction deleted_node_hook(const ApiDB_Node_Updater::node_t& node)
 {
     fmt::print(FMT_COMPILE("Deleted node in changeset {}: {}/{}:{}, lat={}, lon={}, tags={}\n"), node.changeset_id, node.old_id, node.id, node.version, node.lat, node.lon, node.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, node.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction new_way_hook(const ApiDB_Way_Updater::way_t& way)
+HookAction new_way_hook(const ApiDB_Way_Updater::way_t& way)
 {
     std::vector<osm_nwr_id_t> way_nodes;
     for (const auto& n : way.way_nodes)
@@ -154,13 +154,13 @@ Hooks::HookAction new_way_hook(const ApiDB_Way_Updater::way_t& way)
     fmt::print(FMT_COMPILE("New way in changeset {}: {}/{}:{}, nodes={}, tags={}\n"), way.changeset_id, way.old_id, way.id, way.version, way_nodes, way.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, way.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction modified_way_hook(const ApiDB_Way_Updater::way_t& way)
+HookAction modified_way_hook(const ApiDB_Way_Updater::way_t& way)
 {
     std::vector<osm_nwr_id_t> way_nodes;
     for (const auto& n : way.way_nodes)
@@ -168,13 +168,13 @@ Hooks::HookAction modified_way_hook(const ApiDB_Way_Updater::way_t& way)
     fmt::print(FMT_COMPILE("Modified way in changeset {}: {}/{}:{}, nodes={}, tags={}\n"), way.changeset_id, way.old_id, way.id, way.version, way_nodes, way.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, way.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
-Hooks::HookAction deleted_way_hook(const ApiDB_Way_Updater::way_t& way)
+HookAction deleted_way_hook(const ApiDB_Way_Updater::way_t& way)
 {
     std::vector<osm_nwr_id_t> way_nodes;
     for (const auto& n : way.way_nodes)
@@ -182,27 +182,26 @@ Hooks::HookAction deleted_way_hook(const ApiDB_Way_Updater::way_t& way)
     fmt::print(FMT_COMPILE("Deleted way in changeset {}: {}/{}:{}, nodes={}, tags={}\n"), way.changeset_id, way.old_id, way.id, way.version, way_nodes, way.tags);
 
     auto filter_action = tag_filter(ElementType::CHANGESET, way.tags);
-    if (filter_action != Hooks::HookAction::CONTINUE)
+    if (filter_action != HookAction::CONTINUE)
         return filter_action;
 
-    return Hooks::HookAction::CONTINUE;
+    return HookAction::CONTINUE;
 }
 
 extern "C" int init_plugin()
 {
     std::cout << "Hello from plugin foo" << std::endl;
-    Hooks::register_callback<Hooks::Hook::POST_PLUGIN_LOAD>(foo_hook);
-    // Hooks::register_callback_c(Hooks::Hook::POST_PLUGIN_LOAD, (void*)foo_hook);
-    Hooks::register_callback<Hooks::Hook::REQUEST_START>(request_start_hook);
-    Hooks::register_callback<Hooks::Hook::WRITE_REQUEST>(write_request_hook);
-    Hooks::register_callback<Hooks::Hook::CHANGESET_CREATE>(changeset_create_hook);
-    Hooks::register_callback<Hooks::Hook::CHANGESET_UPLOAD>(changeset_upload_hook);
-    Hooks::register_callback<Hooks::Hook::NODE_CREATED>(new_node_hook);
-    Hooks::register_callback<Hooks::Hook::NODE_MODIFIED>(modified_node_hook);
-    Hooks::register_callback<Hooks::Hook::NODE_DELETED>(deleted_node_hook);
-    Hooks::register_callback<Hooks::Hook::WAY_CREATED>(new_way_hook);
-    Hooks::register_callback<Hooks::Hook::WAY_MODIFIED>(modified_way_hook);
-    Hooks::register_callback<Hooks::Hook::WAY_DELETED>(deleted_way_hook);
+    Hook<HookId::POST_PLUGIN_LOAD>::register_callback(foo_hook);
+    Hook<HookId::REQUEST_START>::register_callback(request_start_hook);
+    Hook<HookId::WRITE_REQUEST>::register_callback(write_request_hook);
+    Hook<HookId::CHANGESET_CREATE>::register_callback(changeset_create_hook);
+    Hook<HookId::CHANGESET_UPLOAD>::register_callback(changeset_upload_hook);
+    Hook<HookId::NODE_CREATED>::register_callback(new_node_hook);
+    Hook<HookId::NODE_MODIFIED>::register_callback(modified_node_hook);
+    Hook<HookId::NODE_DELETED>::register_callback(deleted_node_hook);
+    Hook<HookId::WAY_CREATED>::register_callback(new_way_hook);
+    Hook<HookId::WAY_MODIFIED>::register_callback(modified_way_hook);
+    Hook<HookId::WAY_DELETED>::register_callback(deleted_way_hook);
     return 0;
 }
 

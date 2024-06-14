@@ -23,70 +23,58 @@
 
 namespace Hooks
 {
+    extern "C" void register_callback_c(HookId hook, void* callback_func);
 
-    inline std::vector<HookDefinitions::HooksVariant> hooks;
-
-    extern "C" void register_callback_c(Hook hook, void* callback_func);
-    // {
-    //     hooks.emplace_back(HookDefinitions::hook_operations_t::make_hook_variant(hook, callback_func));
-    // }
-
-    template<Hook h>
-    void register_callback(typename HookTraits<h>::CallbackFuncPtr callback_func)
+    template<HookId h>
+    void register_callback(typename Hook<h>::CallbackFuncPtr callback_func)
     {
         register_callback_c(h, reinterpret_cast<void*>(callback_func));
     }
     
-    template<Hooks::Hook hook, typename... Args> //, std::enable_if_t<std::is_invocable_v<typename Tag::Func, Args...>, bool> = true>
-    Hooks::HookAction call(Args&&... args)
-    {
-        for (auto& h : hooks)
-        {
-            if (std::holds_alternative<Hooks::HookInstance<hook>>(h))
-            {
-                std::cout << "Calling hook function\n";
-                auto hook_action = std::visit([&](auto&& arg)
-                {
+//     template<Hooks::HookId hook, typename... Args> //, std::enable_if_t<std::is_invocable_v<typename Tag::Func, Args...>, bool> = true>
+//     Hooks::HookAction call(Args&&... args)
+//     {
+//         for (auto& h : hooks)
+//         {
+//             if (std::holds_alternative<Hooks::HookInstance<hook>>(h))
+//             {
+//                 std::cout << "Calling hook function\n";
+//                 auto hook_action = std::visit([&](auto&& arg)
+//                 {
                     
-                    using THook = std::decay_t<decltype(arg)>;
-                    if constexpr (THook::hookId == hook)
-                    {
-                        static_assert(std::is_invocable_v<decltype(arg.callback), Args...>, "Non-invokable hook callback function");
+//                     using THook = std::decay_t<decltype(arg)>;
+//                     if constexpr (THook::hookId == hook)
+//                     {
+//                         static_assert(std::is_invocable_v<decltype(arg.callback), Args...>, "Non-invokable hook callback function");
 
-                        using res_t = std::invoke_result_t<decltype(arg.callback), Args...>;
+//                         using res_t = std::invoke_result_t<decltype(arg.callback), Args...>;
                         
-                        if constexpr (!std::is_same_v<res_t, void>)
-                        {
-                            auto retval = std::invoke(arg.callback, std::forward<Args>(args)...);
-                            return retval;
-                        }
-                        else
-                        {
-                            std::invoke(arg.callback, std::forward<Args>(args)...);
-                            return HookAction::CONTINUE;
-                        }
-                    }
+//                         if constexpr (!std::is_same_v<res_t, void>)
+//                         {
+//                             auto retval = std::invoke(arg.callback, std::forward<Args>(args)...);
+//                             return retval;
+//                         }
+//                         else
+//                         {
+//                             std::invoke(arg.callback, std::forward<Args>(args)...);
+//                             return HookAction::CONTINUE;
+//                         }
+//                     }
 
-                    return HookAction::CONTINUE;
-                }, h);
+//                     return HookAction::CONTINUE;
+//                 }, h);
 
-                if (hook_action != HookAction::CONTINUE)
-                {
-                    fmt::print(FMT_COMPILE("Hook for {} requested action: {}\n"), static_cast<std::underlying_type_t<Hook>>(hook), static_cast<std::underlying_type_t<HookAction>>(hook_action));
-                    return hook_action;
-                }
-            }
-        }
+//                 if (hook_action != HookAction::CONTINUE)
+//                 {
+//                     fmt::print(FMT_COMPILE("Hook for {} requested action: {}\n"), static_cast<std::underlying_type_t<HookId>>(hook), static_cast<std::underlying_type_t<HookAction>>(hook_action));
+//                     return hook_action;
+//                 }
+//             }
+//         }
 
-        return HookAction::CONTINUE;
-    }
+//         return HookAction::CONTINUE;
+//     }
 };
 
-class HookRegistry {
-public:
-
-// private:
-    
-};
 
 #endif

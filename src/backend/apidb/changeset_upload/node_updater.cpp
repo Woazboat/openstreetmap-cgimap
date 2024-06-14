@@ -56,8 +56,8 @@ void ApiDB_Node_Updater::add_node(double lat, double lon,
   for (const auto &tag : tags)
     new_node.tags.emplace_back(tag.first, tag.second);
 
-  auto hook_action = Hooks::call<Hooks::Hook::NODE_CREATED>(new_node);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::NODE_CREATED>::call(new_node);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Node creation rejected");
   }
@@ -86,8 +86,8 @@ void ApiDB_Node_Updater::modify_node(double lat, double lon,
   for (const auto &tag : tags)
     modify_node.tags.emplace_back(std::make_pair(tag.first, tag.second));
 
-  auto hook_action = Hooks::call<Hooks::Hook::NODE_MODIFIED>(modify_node);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::NODE_MODIFIED>::call(modify_node);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Node modification rejected");
   }
@@ -111,8 +111,8 @@ void ApiDB_Node_Updater::delete_node(osm_changeset_id_t changeset_id,
   delete_node.changeset_id = changeset_id;
   delete_node.if_unused = if_unused;
 
-  auto hook_action = Hooks::call<Hooks::Hook::NODE_DELETED>(delete_node);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::NODE_DELETED>::call(delete_node);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Node deletion rejected");
   }

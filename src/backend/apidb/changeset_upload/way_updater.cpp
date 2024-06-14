@@ -62,8 +62,8 @@ void ApiDB_Way_Updater::add_way(osm_changeset_id_t changeset_id,
     new_way.way_nodes.push_back(
         { (node < 0 ? 0 : static_cast<osm_nwr_id_t>(node)), ++node_seq, node });
 
-  auto hook_action = Hooks::call<Hooks::Hook::WAY_CREATED>(new_way);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::WAY_CREATED>::call(new_way);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Way creation rejected");
   }
@@ -100,8 +100,8 @@ void ApiDB_Way_Updater::modify_way(osm_changeset_id_t changeset_id,
     modify_way.way_nodes.push_back(
         { (node < 0 ? 0 : static_cast<osm_nwr_id_t>(node)), ++node_seq, node });
 
-  auto hook_action = Hooks::call<Hooks::Hook::WAY_MODIFIED>(modify_way);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::WAY_MODIFIED>::call(modify_way);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Way modification rejected");
   }
@@ -126,8 +126,8 @@ void ApiDB_Way_Updater::delete_way(osm_changeset_id_t changeset_id,
   delete_way.changeset_id = changeset_id;
   delete_way.if_unused = if_unused;
 
-  auto hook_action = Hooks::call<Hooks::Hook::WAY_DELETED>(delete_way);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::WAY_DELETED>::call(delete_way);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Way deletion rejected");
   }

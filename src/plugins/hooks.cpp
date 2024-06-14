@@ -9,7 +9,7 @@
 
 #include "cgimap/plugins/hooks.hpp"
 
-extern "C" void Hooks::register_callback_c(Hooks::Hook hook, void* callback_func)
+extern "C" void Hooks::register_callback_c(HookId hook, void* callback_func)
 {
-    Hooks::hooks.emplace_back(Hooks::HookDefinitions::hook_operations_t::make_hook_variant(hook, callback_func));
+    HookDefinitions::hook_operations_t::register_callback(hook, callback_func);
 }

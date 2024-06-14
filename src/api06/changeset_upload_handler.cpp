@@ -57,8 +57,8 @@ changeset_upload_responder::changeset_upload_responder(mime::type mt,
 
   const auto new_changes = handler.get_num_changes();
 
-  auto hook_action = Hooks::call<Hooks::Hook::CHANGESET_UPLOAD>(*user_id, changeset, handler, change_tracking, m_diffresult);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::CHANGESET_UPLOAD>::call(*user_id, changeset, handler, change_tracking, m_diffresult);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Upload rejected");
   }

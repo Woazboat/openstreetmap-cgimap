@@ -281,8 +281,8 @@ process_post_put_request(request &req, const handler& handler,
     {
       const auto payload = req.get_payload();
 
-      auto hook_action = Hooks::call<Hooks::Hook::WRITE_REQUEST>(req, payload, ip, user_id);
-      if (hook_action == Hooks::HookAction::ABORT)
+      auto hook_action = Hook<HookId::WRITE_REQUEST>::call(req, payload, ip, user_id);
+      if (hook_action == HookAction::ABORT)
       {
         throw http::bad_request("Request rejected");
       }
@@ -491,8 +491,8 @@ void process_request(request &req, rate_limiter &limiter,
         user_roles = selection->get_roles_for_user(*user_id);
     }
 
-    auto hook_action = Hooks::call<Hooks::Hook::REQUEST_START>(req, user_id, user_roles);
-    if (hook_action == Hooks::HookAction::ABORT)
+    auto hook_action = Hook<HookId::REQUEST_START>::call(req, user_id, user_roles);
+    if (hook_action == HookAction::ABORT)
     {
       throw http::bad_request("Request rejected");
     }

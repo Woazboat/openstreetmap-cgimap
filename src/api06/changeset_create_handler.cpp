@@ -37,8 +37,8 @@ changeset_create_responder::changeset_create_responder(mime::type mt,
   auto changeset_updater = upd.get_changeset_updater(changeset, *user_id);
   auto tags = ChangesetXMLParser().process_message(payload);
 
-  auto hook_action = Hooks::call<Hooks::Hook::CHANGESET_CREATE>(*user_id, tags);
-  if (hook_action == Hooks::HookAction::ABORT)
+  auto hook_action = Hook<HookId::CHANGESET_CREATE>::call(*user_id, tags);
+  if (hook_action == HookAction::ABORT)
   {
     throw http::bad_request("Request rejected");
   }
