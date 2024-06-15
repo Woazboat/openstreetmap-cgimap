@@ -10,3 +10,7 @@ target_sources(cgimap_foo_plugin
         foo.cpp)
 
 target_link_libraries(cgimap_foo_plugin PRIVATE plugin_interface)
+
+find_package(GDAL CONFIG REQUIRED)
+
+target_link_libraries(cgimap_foo_plugin PRIVATE GDAL::GDAL)

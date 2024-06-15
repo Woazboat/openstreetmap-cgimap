@@ -28,7 +28,7 @@ public:
 
   void lock_current_changeset(bool check_max_elements_limit) override;
 
-  void update_changeset(const uint32_t num_new_changes, const bbox_t bbox) override;
+  std::pair<uint32_t, bbox_t> update_changeset(const uint32_t num_new_changes, const bbox_t bbox) override;
 
   osm_changeset_id_t api_create_changeset(const std::map<std::string, std::string>&) override;
 

@@ -14,6 +14,8 @@
 #include "cgimap/request_helpers.hpp"
 #include "cgimap/output_formatter.hpp"
 
+#include <ogr_geometry.h>
+
 std::vector<HookDefinitions::CallbackHandleVariant> registered_callbacks;
 
 enum class ElementType
@@ -95,9 +97,9 @@ HookAction changeset_create_hook(osm_user_id_t user_id, const api06::TagList& ta
     return HookAction::CONTINUE;
 }
 
-HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult)
+HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult, bbox_t upload_bbox, bbox_t changeset_bbox)
 {
-    fmt::print(FMT_COMPILE("Changeset upload hook: user id: {}, changeset: {}\n"), user_id, changeset);
+    fmt::print(FMT_COMPILE("Changeset upload hook: user id: {}, changeset: {}, upload bbox: {}, changeset bbox: {}\n"), user_id, changeset, upload_bbox.as_double(), changeset_bbox.as_double());
 
     fmt::print(FMT_COMPILE("Diffresult:\n"));
     for (const auto& d : diffresult)
@@ -105,6 +107,32 @@ HookAction changeset_upload_hook(osm_user_id_t user_id, osm_changeset_id_t chang
         auto elt_type_name = osm_object_type_name(d.obj_type);
         auto op_name = osm_operation_name(d.op);
         fmt::print(FMT_COMPILE("{}: {} {} -> {}:{}\n"), elt_type_name, op_name, d.old_id, d.new_id, d.new_version);
+    }
+
+    auto wgs84 = OGRSpatialReference::GetWGS84SRS();
+
+    auto [minlat, minlon, maxlat, maxlon] = changeset_bbox.as_double();
+    OGRLinearRing bbox_ring;
+    bbox_ring.assignSpatialReference(wgs84);
+    bbox_ring.addPoint(minlat, minlon);
+    bbox_ring.addPoint(minlat, maxlon);
+    bbox_ring.addPoint(maxlat, maxlon);
+    bbox_ring.addPoint(maxlat, minlon);
+    bbox_ring.closeRings();
+
+    OGRPolygon bbox_poly;
+    bbox_poly.addRing(&bbox_ring);
+    bbox_poly.assignSpatialReference(wgs84);
+
+    auto bbox_area = bbox_poly.get_Area();
+    auto bbox_area_wgs84 = bbox_poly.get_GeodesicArea(wgs84); // TODO: sometimes returns nan
+    // auto bbox_area_wgs84 = bbox_poly.get_GeodesicArea();
+    fmt::print(FMT_COMPILE("bbox area: {}, geodesic area: {}m²\n"), bbox_area, bbox_area_wgs84);
+
+
+    if (bbox_area_wgs84 >= 15000000000000)
+    {
+        return HookAction::ABORT;
     }
 
     return HookAction::CONTINUE;

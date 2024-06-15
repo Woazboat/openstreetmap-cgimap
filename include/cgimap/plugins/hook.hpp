@@ -150,7 +150,7 @@ template<> struct Hook<HookId::DAEMON_MODE_POST_FORK> : HookBase<HookId::DAEMON_
 template<> struct Hook<HookId::REQUEST_START>         : HookBase<HookId::REQUEST_START, HookAction (const request&, const std::optional<osm_user_id_t>&, const std::set<osm_user_role_t>&)> {};
 template<> struct Hook<HookId::WRITE_REQUEST>         : HookBase<HookId::WRITE_REQUEST, HookAction (const request& req, const std::string& payload, const std::string& ip, const std::optional<osm_user_id_t>& user_id)> {};
 template<> struct Hook<HookId::CHANGESET_CREATE>      : HookBase<HookId::CHANGESET_CREATE, HookAction (osm_user_id_t user_id, const api06::TagList& tags)> {};
-template<> struct Hook<HookId::CHANGESET_UPLOAD>      : HookBase<HookId::NODE_CREATED, HookAction (osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult)> {};
+template<> struct Hook<HookId::CHANGESET_UPLOAD>      : HookBase<HookId::NODE_CREATED, HookAction (osm_user_id_t user_id, osm_changeset_id_t changeset, const api06::OSMChange_Handler& osmchange_handler, const api06::OSMChange_Tracking& change_tracking, const std::vector<api06::diffresult_t> diffresult, bbox_t upload_bbox, bbox_t changeset_bbox)> {};
 template<> struct Hook<HookId::NODE_CREATED>          : HookBase<HookId::NODE_CREATED, HookAction (const ApiDB_Node_Updater::node_t& new_node)> {};
 template<> struct Hook<HookId::NODE_MODIFIED>         : HookBase<HookId::NODE_MODIFIED, HookAction (const ApiDB_Node_Updater::node_t& modified_node)> {};
 template<> struct Hook<HookId::NODE_DELETED>          : HookBase<HookId::NODE_DELETED, HookAction (const ApiDB_Node_Updater::node_t& deleted_node)> {};

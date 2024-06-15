@@ -57,12 +57,6 @@ changeset_upload_responder::changeset_upload_responder(mime::type mt,
 
   const auto new_changes = handler.get_num_changes();
 
-  auto hook_action = Hook<HookId::CHANGESET_UPLOAD>::call(*user_id, changeset, handler, change_tracking, m_diffresult);
-  if (hook_action == HookAction::ABORT)
-  {
-    throw http::bad_request("Upload rejected");
-  }
-
   if (global_settings::get_ratelimiter_upload()) {
 
     auto max_changes = upd.get_rate_limit(*user_id);
@@ -76,7 +70,14 @@ changeset_upload_responder::changeset_upload_responder(mime::type mt,
     }
   }
 
-  changeset_updater->update_changeset(new_changes, handler.get_bbox());
+  auto upload_bbox = handler.get_bbox();
+  auto [cs_changes, cs_bbox] = changeset_updater->update_changeset(new_changes, upload_bbox);
+
+  auto hook_action = Hook<HookId::CHANGESET_UPLOAD>::call(*user_id, changeset, handler, change_tracking, m_diffresult, upload_bbox, cs_bbox);
+  if (hook_action == HookAction::ABORT)
+  {
+    throw http::bad_request("Upload rejected");
+  }
 
   upd.commit();
 }

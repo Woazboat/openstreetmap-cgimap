@@ -104,6 +104,14 @@ public:
 	  maxlat(_maxlat * global_settings::get_scale()),
 	  maxlon(_maxlon * global_settings::get_scale()) {};
 
+	std::tuple<double, double, double, double> as_double() const
+	{
+		return {static_cast<double>(minlat) / global_settings::get_scale(),
+				static_cast<double>(minlon) / global_settings::get_scale(),
+				static_cast<double>(maxlat) / global_settings::get_scale(),
+				static_cast<double>(maxlon) / global_settings::get_scale()};
+	}
+
 	void expand(const bbox_t& bbox)
 	{
 		minlat = std::min(minlat, bbox.minlat);
@@ -124,6 +132,20 @@ public:
 	    os << "[" << bbox.minlat << "," << bbox.minlon << "," << bbox.maxlat << "," << bbox.maxlon << "]";
 	    return os;
 	}
+};
+
+
+template<>
+struct fmt::formatter<bbox_t>
+{
+  template<typename ParseContext>
+  constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
+
+  template<typename FormatContext>
+  auto format(const bbox_t& bbox, FormatContext& ctx) 
+  {
+    return fmt::format_to(ctx.out(), "[{},{},{},{}]", bbox.minlat, bbox.minlon, bbox.maxlat, bbox.maxlon); 
+  }
 };
 
 #endif

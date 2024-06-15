@@ -24,7 +24,7 @@ public:
 
   virtual void lock_current_changeset(bool check_max_elements_limit) = 0;
 
-  virtual void update_changeset(uint32_t num_new_changes, bbox_t bbox) = 0;
+  virtual std::pair<uint32_t, bbox_t> update_changeset(uint32_t num_new_changes, bbox_t bbox) = 0;
 
   virtual osm_changeset_id_t api_create_changeset(const std::map<std::string, std::string>&) = 0;
 

@@ -51,7 +51,7 @@ void ApiDB_Changeset_Updater::lock_current_changeset(bool check_max_elements_lim
 
 }
 
-void ApiDB_Changeset_Updater::update_changeset(const uint32_t num_new_changes,
+std::pair<uint32_t, bbox_t> ApiDB_Changeset_Updater::update_changeset(const uint32_t num_new_changes,
                                                const bbox_t bbox) {
 
   // Don't raise an exception when reaching exactly changeset_max_elements!
@@ -132,6 +132,8 @@ void ApiDB_Changeset_Updater::update_changeset(const uint32_t num_new_changes,
       if (r.affected_rows() != 1)
 	throw http::server_error("Cannot update changeset");
   }
+
+  return {cs_num_changes, cs_bbox};
 }
 
 void
