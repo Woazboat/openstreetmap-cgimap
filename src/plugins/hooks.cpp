@@ -9,7 +9,9 @@
 
 #include "cgimap/plugins/hooks.hpp"
 
-extern "C" void Hooks::register_callback_c(HookId hook, void* callback_func)
+extern "C" uint64_t Hooks::register_callback_c(HookId hook, void* callback_func)
 {
-    HookDefinitions::hook_operations_t::register_callback(hook, callback_func);
+    auto cb_handle = HookDefinitions::hook_operations_t::register_callback(hook, callback_func);
+    auto cb_id = std::visit([](auto&& h){ return h.release(); }, cb_handle);
+    return cb_id;
 }

@@ -23,12 +23,12 @@
 
 namespace Hooks
 {
-    extern "C" void register_callback_c(HookId hook, void* callback_func);
+    extern "C" [[nodiscard]] uint64_t register_callback_c(HookId hook, void* callback_func);
 
     template<HookId h>
-    void register_callback(typename Hook<h>::CallbackFuncPtr callback_func)
+    [[nodiscard]] uint64_t register_callback(typename Hook<h>::CallbackFuncPtr callback_func)
     {
-        register_callback_c(h, reinterpret_cast<void*>(callback_func));
+        return register_callback_c(h, reinterpret_cast<void*>(callback_func));
     }
     
 //     template<Hooks::HookId hook, typename... Args> //, std::enable_if_t<std::is_invocable_v<typename Tag::Func, Args...>, bool> = true>

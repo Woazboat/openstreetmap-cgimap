@@ -55,17 +55,65 @@ struct HookBase
 
     static constexpr HookId hook_id = h;
 
-    static inline std::vector<CallbackFuncPtr> registered_callbacks;
+    static inline uint64_t callback_id_counter = 0;
+    static inline std::vector<std::pair<size_t, CallbackFuncPtr>> registered_callbacks;
 
-    static void register_callback(CallbackFuncPtr callback_func)
+    static bool remove_callback(uint64_t callback_id)
     {
-        registered_callbacks.emplace_back(callback_func);
+        auto remove_it = std::remove_if(registered_callbacks.begin(), registered_callbacks.end(), [callback_id](const auto& c){ return c.first == callback_id; });
+        bool removed = remove_it != registered_callbacks.end();
+        registered_callbacks.erase(remove_it, registered_callbacks.end());
+
+        fmt::print(FMT_COMPILE("Remove callback for hook {}, id: {}, removed: {}\n"), 
+            static_cast<std::underlying_type_t<HookId>>(hook_id), callback_id, removed);
+
+        return removed;
+    }
+
+    class CallbackHandle
+    {
+    public:
+        constexpr CallbackHandle(uint64_t callback_id) noexcept : 
+            callback_id(callback_id) {}
+        constexpr CallbackHandle(CallbackHandle&& other) noexcept : 
+            callback_id(other.callback_id) { other.callback_id = 0; }
+        constexpr CallbackHandle& operator=(CallbackHandle&& other) noexcept { std::swap(callback_id, other.callback_id); }
+        
+        ~CallbackHandle()
+        {
+            if (callback_id != 0)
+                HookBase::remove_callback(callback_id);
+        }
+
+        constexpr uint64_t release() noexcept
+        {
+            uint64_t id = callback_id;
+            callback_id = 0;
+            return callback_id;
+        }
+
+        CallbackHandle(const CallbackHandle&) = delete;
+        CallbackHandle& operator=(const CallbackHandle&) = delete;
+
+    private:
+        uint64_t callback_id;
+    };
+
+    [[nodiscard]] static CallbackHandle register_callback(CallbackFuncPtr callback_func)
+    {
+        auto callback_id = ++callback_id_counter;
+        registered_callbacks.emplace_back(callback_id, callback_func);
+
+        fmt::print(FMT_COMPILE("Register callback for hook {}, id: {}\n"), 
+            static_cast<std::underlying_type_t<HookId>>(hook_id), callback_id);
+        
+        return CallbackHandle(callback_id);
     }
 
     template<typename... Args, std::enable_if_t<std::is_invocable_v<CallbackFuncPtr, Args...>, bool> = true>
     static HookAction call(Args&&... args)
     {
-        for (const auto cb : registered_callbacks)
+        for (const auto& [cb_id, cb] : registered_callbacks)
         {
             std::cout << "Calling hook function\n";
             static_assert(std::is_invocable_v<decltype(cb), Args...>, "Non-invokable hook callback function");
@@ -133,20 +181,22 @@ struct HookDefinitionsHelper
 {
     // using HooksVariant = std::variant<HookInstance<hooks>...>;
 
+    using CallbackHandleVariant = std::variant<typename Hook<hooks>::CallbackHandle...>;
+
     template<HookId h1, HookId... rest>
     struct hook_operations
     {
-        static constexpr void register_callback(HookId h, void* callback)
+        static constexpr CallbackHandleVariant register_callback(HookId h, void* callback)
         {
             if (h == h1)
             {
-                Hook<h1>::register_callback(reinterpret_cast<typename Hook<h1>::CallbackFuncPtr>(callback));
+                return Hook<h1>::register_callback(reinterpret_cast<typename Hook<h1>::CallbackFuncPtr>(callback));
             }
             else
             {
                 if constexpr (sizeof...(rest) > 0)
                 {
-                    hook_operations<rest...>::register_callback(h, callback);
+                    return hook_operations<rest...>::register_callback(h, callback);
                 }
                 else
                 {

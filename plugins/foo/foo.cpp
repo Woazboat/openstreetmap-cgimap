@@ -14,10 +14,7 @@
 #include "cgimap/request_helpers.hpp"
 #include "cgimap/output_formatter.hpp"
 
-// namespace Hooks
-// {
-//     extern 
-// };
+std::vector<HookDefinitions::CallbackHandleVariant> registered_callbacks;
 
 enum class ElementType
 {
@@ -191,17 +188,17 @@ HookAction deleted_way_hook(const ApiDB_Way_Updater::way_t& way)
 extern "C" int init_plugin()
 {
     std::cout << "Hello from plugin foo" << std::endl;
-    Hook<HookId::POST_PLUGIN_LOAD>::register_callback(foo_hook);
-    Hook<HookId::REQUEST_START>::register_callback(request_start_hook);
-    Hook<HookId::WRITE_REQUEST>::register_callback(write_request_hook);
-    Hook<HookId::CHANGESET_CREATE>::register_callback(changeset_create_hook);
-    Hook<HookId::CHANGESET_UPLOAD>::register_callback(changeset_upload_hook);
-    Hook<HookId::NODE_CREATED>::register_callback(new_node_hook);
-    Hook<HookId::NODE_MODIFIED>::register_callback(modified_node_hook);
-    Hook<HookId::NODE_DELETED>::register_callback(deleted_node_hook);
-    Hook<HookId::WAY_CREATED>::register_callback(new_way_hook);
-    Hook<HookId::WAY_MODIFIED>::register_callback(modified_way_hook);
-    Hook<HookId::WAY_DELETED>::register_callback(deleted_way_hook);
+    registered_callbacks.emplace_back(Hook<HookId::POST_PLUGIN_LOAD>::register_callback(foo_hook));
+    registered_callbacks.emplace_back(Hook<HookId::REQUEST_START>::register_callback(request_start_hook));
+    registered_callbacks.emplace_back(Hook<HookId::WRITE_REQUEST>::register_callback(write_request_hook));
+    registered_callbacks.emplace_back(Hook<HookId::CHANGESET_CREATE>::register_callback(changeset_create_hook));
+    registered_callbacks.emplace_back(Hook<HookId::CHANGESET_UPLOAD>::register_callback(changeset_upload_hook));
+    registered_callbacks.emplace_back(Hook<HookId::NODE_CREATED>::register_callback(new_node_hook));
+    registered_callbacks.emplace_back(Hook<HookId::NODE_MODIFIED>::register_callback(modified_node_hook));
+    registered_callbacks.emplace_back(Hook<HookId::NODE_DELETED>::register_callback(deleted_node_hook));
+    registered_callbacks.emplace_back(Hook<HookId::WAY_CREATED>::register_callback(new_way_hook));
+    registered_callbacks.emplace_back(Hook<HookId::WAY_MODIFIED>::register_callback(modified_way_hook));
+    registered_callbacks.emplace_back(Hook<HookId::WAY_DELETED>::register_callback(deleted_way_hook));
     return 0;
 }
 
