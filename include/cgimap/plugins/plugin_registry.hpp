@@ -18,6 +18,8 @@
 #include <type_traits>
 #include <functional>
 
+struct PluginInfo;
+
 class Plugin {
 public:
   Plugin(const std::filesystem::path &load_path);
@@ -30,8 +32,9 @@ public:
   std::filesystem::path load_path() const;
 
 private:
-  using init_func_t = int (*)();
+  // using init_func_t = int (*)();
 
+  const PluginInfo* info;
   std::string name_;
   std::filesystem::path load_path_;
   void *dlopen_handle_ = nullptr;

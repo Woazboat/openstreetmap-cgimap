@@ -14,12 +14,11 @@
 #include <dlfcn.h>
 #include <fmt/core.h>
 #include <vector>
+#include <cassert>
+
+#include "cgimap/plugins/cgimap_plugin.hpp"
 
 PluginRegistry plugin_registry;
-
-extern "C" void foo_target_function() {
-  fmt::print("foo target function called\n");
-}
 
 Plugin::Plugin(const std::filesystem::path &load_path)
     : name_(load_path.filename().string()), load_path_(load_path) {}
@@ -34,26 +33,60 @@ int Plugin::load() {
     return -1;
   }
 
+  int plugin_init_status = 0;
+  plugin_info_func_t plugin_info_func = nullptr;
+  plugin_init_func_t plugin_init_func = nullptr;
+
   dlopen_handle_ = dlopen(load_path_.c_str(), RTLD_NOW);
   if (!dlopen_handle_) {
     auto dlopen_error = dlerror();
-    fmt::print("Unable to load plugin {}: {}\n", load_path_.string(),
-               dlopen_error);
+    fmt::print("Unable to load plugin {}: {}\n", load_path_.string(), dlopen_error);
     return -1;
   }
 
-  fmt::print("Loaded plugin: {}, handle: {}\n", load_path_.string(),
-             dlopen_handle_);
 
-  auto plugin_init_func = (init_func_t)dlsym(dlopen_handle_, "init_plugin");
-  if (plugin_init_func) {
-    int plugin_init_status = plugin_init_func();
-  } else {
-    fmt::print("Plugin {} init function not found: {}\n", load_path_.string(),
-               dlerror());
+
+  plugin_info_func = reinterpret_cast<plugin_info_func_t>(dlsym(dlopen_handle_, "plugin_info"));
+  if (!plugin_info_func) {
+    fmt::print("Plugin {} info function not found: {}\n", load_path_.string(), dlerror());
+    goto error_unload;
   }
 
+  info = plugin_info_func();
+  if (!info->id || !info->name || !info->description || !info->version) {
+    fmt::print("Plugin {} invalid plugin info\n", load_path_.string());
+    goto error_unload;
+  }
+
+  plugin_init_func = reinterpret_cast<plugin_init_func_t>(dlsym(dlopen_handle_, "init_plugin"));
+  if (!plugin_init_func) {
+    fmt::print("Plugin {} init function not found: {}\n", info->id, dlerror());
+    goto error_unload;
+  }
+
+  plugin_init_status = plugin_init_func();
+  if (plugin_init_status)
+  {
+    fmt::print("Plugin {} init failed\n", info->id);
+    goto error_unload;
+  }
+
+  fmt::print("Loaded plugin: {}\n", info->id);
+
   return 0;
+
+error_unload:
+  fmt::print("Failed to load plugin {}\n", load_path_.string());
+
+  int close_status = dlclose(dlopen_handle_);
+  if (close_status) {
+    fmt::print("Failed to unload plugin {}\n", load_path_.string());
+    return -1;
+  }
+
+  dlopen_handle_ = nullptr;
+
+  return -1;
 }
 
 int Plugin::unload() {

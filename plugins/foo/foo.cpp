@@ -7,14 +7,21 @@
 #include <fmt/compile.h>
 #include <fmt/ranges.h>
 
-#include "cgimap_plugin.hpp"
-#include "hooks.hpp"
+#include "cgimap/plugins/cgimap_plugin.hpp"
+#include "cgimap/plugins/hooks.hpp"
 #include "cgimap/types.hpp"
 #include "cgimap/request.hpp"
 #include "cgimap/request_helpers.hpp"
 #include "cgimap/output_formatter.hpp"
 
 #include <ogr_geometry.h>
+
+PluginInfo info {
+    .id = "foo",
+    .name = "Foo Plugin",
+    .description = "A test plugin for testing cgimap plugin functionality",
+    .version = "0.1"
+};
 
 std::vector<HookDefinitions::CallbackHandleVariant> registered_callbacks;
 
@@ -213,6 +220,11 @@ HookAction deleted_way_hook(const ApiDB_Way_Updater::way_t& way)
     return HookAction::CONTINUE;
 }
 
+extern "C" const PluginInfo* plugin_info()
+{
+    return &info;
+}
+
 extern "C" int init_plugin()
 {
     std::cout << "Hello from plugin foo" << std::endl;
@@ -233,25 +245,23 @@ extern "C" int init_plugin()
 extern "C" int deinit_plugin()
 {
     std::cout << "Goodbye from plugin foo" << std::endl;
+    registered_callbacks.clear();
     return 0;
 }
 
-extern "C" const char* plugin_version()
-{
-    return "v0.1";
-}
+// extern "C" const char* plugin_version()
+// {
+//     return "v0.1";
+// }
 
-int foo_plugin()
-{
-    return 0;
-}
-
-extern "C" void foo_target_function();
+// int foo_plugin()
+// {
+//     return 0;
+// }
 
 __attribute__((constructor)) void foo_ctor()
 {
     std::cout << "Hello from plugin foo constructor" << std::endl;
-    foo_target_function();
 }
 
 __attribute__((destructor)) void foo_dtor()

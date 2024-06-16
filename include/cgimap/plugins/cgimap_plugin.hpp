@@ -10,9 +10,22 @@
 #ifndef CGIMAP_PLUGIN_HPP
 #define CGIMAP_PLUGIN_HPP
 
+struct PluginInfo
+{
+    const char* id;
+    const char* name;
+    const char* description;
+    const char* version;
+};
+
+using plugin_info_func_t = const PluginInfo* (*)();
+extern "C" const PluginInfo* plugin_info();
+
+using plugin_init_func_t = int (*)();
 extern "C" int init_plugin();
+using plugin_deinit_func_t = int (*)();
 extern "C" int deinit_plugin();
 
-extern "C" const char* plugin_version();
+// extern "C" const char* plugin_version();
 
 #endif
