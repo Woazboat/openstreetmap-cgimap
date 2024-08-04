@@ -54,7 +54,7 @@ public:
   bool is_user_blocked(const osm_user_id_t) override { return true; }
   std::set<osm_user_role_t> get_roles_for_user(osm_user_id_t id) override { return {}; }
   std::optional< osm_user_id_t > get_user_id_for_oauth2_token(
-      const std::string &token_id, bool &expired, bool &revoked,
+      std::string_view token_id, bool &expired, bool &revoked,
       bool &allow_api_write) override { return {}; }
   bool is_user_active(const osm_user_id_t id) override { return false; }
 

@@ -819,7 +819,7 @@ std::set< osm_user_role_t > readonly_pgsql_selection::get_roles_for_user(osm_use
 }
 
 std::optional< osm_user_id_t > readonly_pgsql_selection::get_user_id_for_oauth2_token(
-    const std::string &token_id, bool &expired, bool &revoked,
+    std::string_view token_id, bool &expired, bool &revoked,
     bool &allow_api_write)
 {
   // return details for OAuth 2.0 access token

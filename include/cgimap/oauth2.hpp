@@ -10,8 +10,7 @@
 #ifndef OAUTH2_HPP
 #define OAUTH2_HPP
 
-#include <memory>
-#include <string>
+#include <optional>
 
 #include "cgimap/data_selection.hpp"
 #include "cgimap/http.hpp"

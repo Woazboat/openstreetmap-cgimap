@@ -27,7 +27,7 @@ public:
 
   ~oauth2_test_data_selection() override = default;
 
-  std::optional<osm_user_id_t> get_user_id_for_oauth2_token(const std::string &token_id, 
+  std::optional<osm_user_id_t> get_user_id_for_oauth2_token(std::string_view token_id, 
                                                             bool& expired, 
                                                             bool& revoked, 
                                                             bool& allow_api_write) override {

@@ -13,7 +13,7 @@
 #include <cryptopp/sha.h>
 #include <sys/types.h>
 
-#include <regex>
+#include <string_view>
 
 #include "cgimap/oauth2.hpp"
 
@@ -33,28 +33,19 @@ inline std::string sha256_hash(const std::string& s) {
 
 namespace oauth2 {
 
-  bool is_valid_bearer_token_char(unsigned char c) {
+  [[nodiscard]] constexpr bool is_valid_bearer_token_char(char c) {
       // according to RFC 6750, section 2.1
 
       switch (c) {
           case 'a' ... 'z':
-              return true;
           case 'A' ... 'Z':
-              return true;
           case '0' ... '9':
-              return true;
           case '-':
-              return true;
           case '.':
-              return true;
           case '_':
-              return true;
           case '~':
-              return true;
           case '+':
-              return true;
           case '/':
-              return true;
           case '=':
               return true;  // we ignore that this char should only occur at end
       }
@@ -62,22 +53,20 @@ namespace oauth2 {
       return false;
   }
 
-  bool has_forbidden_char(std::string_view str) {
-      return std::find_if(str.begin(), str.end(), [](unsigned char ch) {
-                 return !is_valid_bearer_token_char(ch);
-             }) != str.end();
+  [[nodiscard]] bool has_forbidden_char(std::string_view str) {
+      return !std::all_of(str.begin(), str.end(), is_valid_bearer_token_char);
   }
 
   [[nodiscard]] std::optional<osm_user_id_t> validate_bearer_token(const request &req, data_selection& selection, bool& allow_api_write)
   {
-    const char * auth_hdr = req.get_param ("HTTP_AUTHORIZATION");
+    const char * auth_hdr = req.get_param("HTTP_AUTHORIZATION");
     if (auth_hdr == nullptr)
       return std::nullopt;
 
-    const auto auth_header = std::string(auth_hdr);
+    const std::string_view auth_header{auth_hdr};
 
     // Auth header starts with Bearer?
-    if (auth_header.rfind("Bearer ", 0) == std::string::npos)
+    if (auth_header.rfind("Bearer ", 0) == std::string_view::npos)
       return std::nullopt;
 
     const auto bearer_token = auth_header.substr(7);
@@ -88,15 +77,15 @@ namespace oauth2 {
     if (has_forbidden_char(bearer_token))
       return std::nullopt;
 
-    bool expired;
-    bool revoked;
+    bool expired = true;
+    bool revoked = true;
 
     // Check token as plain text first
     auto user_id = selection.get_user_id_for_oauth2_token(bearer_token, expired, revoked, allow_api_write);
 
     // Fallback to sha256-hashed token
     if (!(user_id)) {
-      const auto bearer_token_hashed = sha256_hash(bearer_token);
+      const auto bearer_token_hashed = sha256_hash(std::string(bearer_token));
       user_id = selection.get_user_id_for_oauth2_token(bearer_token_hashed, expired, revoked, allow_api_write);
     }
 

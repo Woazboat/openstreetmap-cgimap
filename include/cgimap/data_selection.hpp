@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <string_view>
 
 class Transaction_Owner_Base;
 
@@ -175,7 +176,7 @@ public:
   virtual std::set<osm_user_role_t> get_roles_for_user(osm_user_id_t id) = 0;
 
   virtual std::optional< osm_user_id_t > get_user_id_for_oauth2_token(
-      const std::string &token_id, bool &expired, bool &revoked,
+      std::string_view token_id, bool &expired, bool &revoked,
       bool &allow_api_write) = 0;
 
   // is user status confirmed or active?

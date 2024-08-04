@@ -14,6 +14,7 @@
 
 #include <map>
 #include <memory>
+#include <functional>
 
 struct oauth2_token_detail_t
 {
@@ -23,7 +24,7 @@ struct oauth2_token_detail_t
   osm_user_id_t user_id;
 };
 
-using oauth2_tokens = std::map<std::string, oauth2_token_detail_t>;
+using oauth2_tokens = std::map<std::string, oauth2_token_detail_t, std::less<>>;
 
 using user_roles_t = std::map<osm_user_id_t, std::set<osm_user_role_t> >;
 

@@ -588,7 +588,7 @@ struct static_data_selection : public data_selection {
   }
 
   std::optional< osm_user_id_t > get_user_id_for_oauth2_token(
-        const std::string &token_id, bool &expired, bool &revoked,
+        std::string_view token_id, bool &expired, bool &revoked,
         bool &allow_api_write) override {
 
     auto itr = m_oauth2_tokens.find(token_id);
