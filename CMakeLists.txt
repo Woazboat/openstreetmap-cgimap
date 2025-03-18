@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 ################
 # openstreetmap-cgimap project
@@ -62,7 +62,7 @@ include(BuildLint)
 #########################
 add_library(cgimap_common_compiler_options INTERFACE)
 
-target_compile_features(cgimap_common_compiler_options INTERFACE cxx_std_20)
+target_compile_features(cgimap_common_compiler_options INTERFACE cxx_std_23)
 target_compile_definitions(cgimap_common_compiler_options INTERFACE CMAKE=1
                            BOOST_BIND_GLOBAL_PLACEHOLDERS)
 target_add_autotools_compatibility_definitions(cgimap_common_compiler_options)
@@ -159,7 +159,7 @@ if(CLANG_TIDY)
 
     add_custom_target(clang-tidy
         ${CLANG_TIDY}
-        -extra-arg=-std=c++20
+        -extra-arg=-std=c++23
         -p ${CMAKE_BINARY_DIR}
         ${CT_CHECK_FILES}
     )
