@@ -68,6 +68,8 @@ TEST_CASE("http_check_choose_encoding", "[http]") {
   CHECK(http::choose_encoding("deflate, gzip;q=1.0, *;q=0.5")->name() == "deflate");
   CHECK(http::choose_encoding("gzip;q=1.0, identity;q=0.8, *;q=0.1")->name() == "gzip");
   CHECK(http::choose_encoding("identity;q=0.8, gzip;q=1.0, *;q=0.1")->name() == "gzip");
+  CHECK(http::choose_encoding("identity ; q=0.8, gzip ;q=1.0, *; q=0.1")->name() == "gzip");
+  CHECK(http::choose_encoding("identity;q=0.8,gzip;q=1.0, *;q=0.1")->name() == "gzip");
   CHECK(http::choose_encoding("gzip")->name() == "gzip");
   CHECK(http::choose_encoding("identity")->name() == "identity");
   CHECK(http::choose_encoding("*")->name() == "br");

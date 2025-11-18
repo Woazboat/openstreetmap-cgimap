@@ -156,11 +156,7 @@ std::unique_ptr<encoding> choose_encoding(const std::string &accept_encoding) {
 
   using namespace std::literals;
 
-  std::vector<std::string_view> encodings;
-
-  for (auto parts = std::ranges::views::split(accept_encoding, ", "sv); auto&& part : parts) {
-    encodings.emplace_back(&*part.begin(), std::ranges::distance(part));
-  }
+  std::vector<std::string_view> encodings = split_trim<std::string_view>(accept_encoding, ',');
 
   float identity_quality = 0.000;
   float deflate_quality = 0.000;
@@ -176,14 +172,10 @@ std::unique_ptr<encoding> choose_encoding(const std::string &accept_encoding) {
     std::string name;
     float quality = 0.0;
 
-    std::vector<std::string> what;
+    std::vector<std::string_view> what = split_trim(encoding, ';');
 
-    for (auto parts = std::ranges::views::split(encoding, ";q="sv); auto&& part : parts) {
-      what.emplace_back(std::string(&*part.begin(), std::ranges::distance(part)));
-    }
-
-    if (what.size() == 2) {
-      float q = std::stof(what[1]);
+    if (what.size() == 2 && what[1].starts_with("q="sv)) {
+      float q = std::stof(std::string{what[1].substr(2)});
       if (q >= 0 && q <= 1) {
         name = what[0];
         quality = q;
