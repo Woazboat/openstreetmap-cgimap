@@ -15,6 +15,7 @@
 #include <string_view>
 #include <vector>
 #include <optional>
+#include <ranges>
 
 #ifdef HAVE_LIBZ
 #include "cgimap/zlib.hpp"
@@ -268,6 +269,10 @@ public:
 
   const std::string &name() const { return name_; };
 
+  constexpr bool matches(std::string_view encoding_id) const {
+    return encoding_id == name_ || encoding_id == "*";
+  }
+
   virtual std::unique_ptr<output_buffer> buffer(output_buffer& out) const {
     return std::make_unique<identity_output_buffer>(out);
   }
@@ -276,12 +281,22 @@ public:
 class identity : public encoding {
 public:
   constexpr identity() : encoding("identity"){};
+
+  static inline identity& instance() {
+    static identity instance_{};
+    return instance_;
+  }
 };
 
 #ifdef HAVE_LIBZ
 class deflate : public encoding {
 public:
   constexpr deflate() : encoding("deflate"){}
+
+  static inline deflate& instance() {
+    static deflate instance_{};
+    return instance_;
+  }
 
   std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<zlib_output_buffer>(out, zlib_output_buffer::mode::zlib);
@@ -291,6 +306,11 @@ public:
 class gzip : public encoding {
 public:
   constexpr gzip() : encoding("gzip"){}
+
+  static inline gzip& instance() {
+    static gzip instance_{};
+    return instance_;
+  }
 
   std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<zlib_output_buffer>(out, zlib_output_buffer::mode::gzip);
@@ -304,6 +324,11 @@ class brotli : public encoding {
 public:
   constexpr brotli() : encoding("br"){}
 
+  static inline brotli& instance() {
+    static brotli instance_{};
+    return instance_;
+  }
+
   std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<brotli_output_buffer>(out);
   }
@@ -314,7 +339,7 @@ public:
  * Parses an Accept-Encoding header and returns the chosen
  * encoding.
  */
-std::unique_ptr<http::encoding> choose_encoding(const std::string &accept_encoding);
+const http::encoding* choose_encoding(const std::string &accept_encoding);
 
 std::unique_ptr<ZLibBaseDecompressor> get_content_encoding_handler(std::string_view content_encoding);
 
@@ -343,6 +368,46 @@ std::optional<method> parse_method(std::string_view s);
 
 // parse CONTENT_LENGTH HTTP header
 unsigned long parse_content_length(const std::string &);
+
+
+// Parsing view for HTTP header list values.
+// views into input string, does NOT copy values -> beware dangling references
+
+struct HttpParameterView {
+  std::string_view key;
+  std::string_view value;
+
+  static HttpParameterView parse(std::string_view param);
+};
+
+struct HttpItemView {
+  std::string_view item;
+  std::vector<HttpParameterView> parameters;
+
+  static HttpItemView parse(std::string_view list_value);
+};
+
+struct HttpListView {
+  std::vector<HttpItemView> values;
+
+  static constexpr auto parse(std::string_view header) {
+    auto xs = header 
+      | std::ranges::views::split(',')
+      | std::ranges::views::transform([](const auto& x){ return std::string_view{x.begin(), x.end()}; })
+      | std::ranges::views::transform(HttpItemView::parse);
+
+    if (std::ranges::empty(xs)) {
+      throw bad_request("Invalid empty http header");
+    }
+
+    return xs;
+  }
+
+  explicit constexpr HttpListView(std::string_view header) : values{/* C++23: {std::from_range_t, parse(header)} */} {
+    auto xs = parse(header);
+    values = {xs.begin(), xs.end()};
+  }
+};
 
 } // namespace http
 

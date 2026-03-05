@@ -22,6 +22,8 @@
 #include <string>
 #include <string_view>
 #include <ranges>
+#include <utility>
+#include <iterator>
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -175,6 +177,15 @@ inline std::string escape(std::string_view input) {
 template <typename T>
 inline std::string to_string(const T &ids) {
   return fmt::format("{}", fmt::join(ids, ","));
+}
+
+constexpr auto pop_or_throw(auto& begin_it, const auto& end_it, const auto& e) {
+  if (begin_it == end_it)
+    throw e;
+  
+  auto tmp = std::move(*begin_it);
+  std::ranges::advance(begin_it, 1, end_it);
+  return tmp;
 }
 
 
