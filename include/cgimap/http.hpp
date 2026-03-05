@@ -63,7 +63,7 @@ private:
 
 protected:
   template <typename T>
-  exception(int c, T&& m) :
+  constexpr exception(int c, T&& m) :
     std::runtime_error(std::forward<T>(m)),
     code_(c) {}
 
@@ -83,7 +83,7 @@ public:
 class server_error : public exception {
 public:
   template <typename T>
-  explicit server_error(T&& message) : exception(500, std::forward<T>(message)) {}
+  explicit constexpr server_error(T&& message) : exception(500, std::forward<T>(message)) {}
 };
 
 /**
@@ -93,7 +93,7 @@ public:
 class bad_request : public exception {
 public:
   template <typename T>
-  explicit bad_request(T&& message) : exception(400, std::forward<T>(message)) {}
+  explicit constexpr bad_request(T&& message) : exception(400, std::forward<T>(message)) {}
 };
 
 /**
@@ -104,7 +104,7 @@ public:
 class forbidden : public exception {
 public:
   template <typename T>
-  explicit forbidden(T&& message) : exception(403, std::forward<T>(message)) {}
+  explicit constexpr forbidden(T&& message) : exception(403, std::forward<T>(message)) {}
 };
 
 /**
@@ -126,7 +126,7 @@ public:
 class not_acceptable : public exception {
 public:
   template <typename T>
-  explicit not_acceptable(T&& message) : exception(406, std::forward<T>(message)) {}
+  explicit constexpr not_acceptable(T&& message) : exception(406, std::forward<T>(message)) {}
 };
 
 /**
@@ -137,7 +137,7 @@ public:
 class conflict : public exception {
 public:
   template <typename T>
-  explicit conflict(T&& message) : exception(409, std::forward<T>(message)) {}
+  explicit constexpr conflict(T&& message) : exception(409, std::forward<T>(message)) {}
 };
 
 /**
@@ -147,11 +147,11 @@ public:
 class precondition_failed : public exception {
 public:
   template <typename T>
-  explicit precondition_failed(T&& message) :
+  explicit constexpr precondition_failed(T&& message) :
     exception(412, std::forward<T>(message)),
     fullstring("Precondition failed: " + std::string(exception::what())) {}
 
-  const char *what() const noexcept override {
+  constexpr const char *what() const noexcept override {
     return fullstring.c_str();
   }
 
@@ -167,7 +167,7 @@ private:
 class payload_too_large : public exception {
 public:
   template <typename T>
-  explicit payload_too_large(T&& message) : exception(413, std::forward<T>(message)) {}
+  explicit constexpr payload_too_large(T&& message) : exception(413, std::forward<T>(message)) {}
 };
 
 
@@ -179,7 +179,7 @@ public:
 class too_many_requests : public exception {
 public:
   template <typename T>
-  explicit too_many_requests(T&& message) : exception(429, std::forward<T>(message)) {}
+  explicit constexpr too_many_requests(T&& message) : exception(429, std::forward<T>(message)) {}
 };
 
 
@@ -190,7 +190,7 @@ public:
 class not_found : public exception {
 public:
   template <typename T>
-  explicit not_found(T&& message) : exception(404, std::forward<T>(message)) {}
+  explicit constexpr not_found(T&& message) : exception(404, std::forward<T>(message)) {}
 };
 
 /**
@@ -218,7 +218,7 @@ public:
 class unauthorized : public exception {
 public:
   template <typename T>
-  explicit unauthorized(T&& message) : exception(401, std::forward<T>(message)) {}
+  explicit constexpr unauthorized(T&& message) : exception(401, std::forward<T>(message)) {}
 };
 
 /**
@@ -228,7 +228,7 @@ public:
 class unsupported_media_type : public exception {
 public:
   template <typename T>
-  explicit unsupported_media_type(T&& message) : exception(415, std::forward<T>(message)) {}
+  explicit constexpr unsupported_media_type(T&& message) : exception(415, std::forward<T>(message)) {}
 };
 
 /**
@@ -263,35 +263,36 @@ private:
   const std::string name_;
 
 public:
-  explicit encoding(std::string name) : name_(std::move(name)){}
+  explicit constexpr encoding(std::string name) : name_(std::move(name)){}
   virtual ~encoding() = default;
 
   const std::string &name() const { return name_; };
 
-  virtual std::unique_ptr<output_buffer>  buffer(output_buffer& out) {
+  virtual std::unique_ptr<output_buffer> buffer(output_buffer& out) const {
     return std::make_unique<identity_output_buffer>(out);
   }
 };
 
 class identity : public encoding {
 public:
-  identity() : encoding("identity"){};
+  constexpr identity() : encoding("identity"){};
 };
 
 #ifdef HAVE_LIBZ
 class deflate : public encoding {
 public:
-  deflate() : encoding("deflate"){}
+  constexpr deflate() : encoding("deflate"){}
 
-  std::unique_ptr<output_buffer> buffer(output_buffer& out) override {
+  std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<zlib_output_buffer>(out, zlib_output_buffer::mode::zlib);
   }
 };
 
 class gzip : public encoding {
 public:
-  gzip() : encoding("gzip"){}
-  std::unique_ptr<output_buffer> buffer(output_buffer& out) override {
+  constexpr gzip() : encoding("gzip"){}
+
+  std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<zlib_output_buffer>(out, zlib_output_buffer::mode::gzip);
   }
 };
@@ -301,8 +302,9 @@ public:
 
 class brotli : public encoding {
 public:
-  brotli() : encoding("br"){}
-  std::unique_ptr<output_buffer> buffer(output_buffer& out) override {
+  constexpr brotli() : encoding("br"){}
+
+  std::unique_ptr<output_buffer> buffer(output_buffer& out) const override {
     return std::make_unique<brotli_output_buffer>(out);
   }
 };

@@ -93,7 +93,7 @@ concept StringLike = std::is_same_v<std::remove_cvref_t<T>, std::string> ||
                      std::is_same_v<std::remove_cvref_t<T>, std::string_view>;
 
 template <StringLike T>
-inline T trim(T str) {
+constexpr T trim(T str) {
   auto start = str.find_first_not_of(" \t\n\r");
   if (start == T::npos)
       return {};
