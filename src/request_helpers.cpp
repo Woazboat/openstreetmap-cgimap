@@ -94,7 +94,7 @@ const http::encoding* get_encoding(const request &req) {
   const char *accept_encoding = req.get_param("HTTP_ACCEPT_ENCODING");
 
   if (accept_encoding) {
-    return http::choose_encoding(std::string(accept_encoding));
+    return http::choose_encoding(accept_encoding);
   } else {
     return &http::identity::instance();
   }

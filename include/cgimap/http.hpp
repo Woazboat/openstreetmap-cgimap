@@ -339,7 +339,7 @@ public:
  * Parses an Accept-Encoding header and returns the chosen
  * encoding.
  */
-const http::encoding* choose_encoding(const std::string &accept_encoding);
+const http::encoding* choose_encoding(std::string_view accept_encoding);
 
 std::unique_ptr<ZLibBaseDecompressor> get_content_encoding_handler(std::string_view content_encoding);
 

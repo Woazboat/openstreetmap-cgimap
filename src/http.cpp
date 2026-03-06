@@ -169,7 +169,7 @@ const std::vector<const encoding*>& get_supported_encodings() {
   return supported_encodings;
 }
 
-const encoding* choose_encoding(const std::string &accept_encoding) {
+const encoding* choose_encoding(std::string_view accept_encoding) {
   std::vector<std::pair<const encoding*, float>> potential_encodings{};
 
   HttpListView accept_encodings{accept_encoding};
