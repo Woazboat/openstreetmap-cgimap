@@ -22,9 +22,9 @@ This tool is useful for replacing certain API endpoints with optimized versions 
 Before installing and using cgimap, make sure your system meets the following requirements:
 Software Requirements:
 
-* **Operating System**: Linux (tested on Ubuntu 22.04, 24.04, Debian 12, and 13)
+* **Operating System**: Linux (tested on Ubuntu 24.04, Debian 12, and 13)
 
-* **C++20**: cgimap requires a compiler that supports C++20.
+* **C++20**: cgimap requires a compiler that supports C++20 (GCC/libstdc++ >= 12).
 
 * **PostgreSQL**: A running PostgreSQL server with an APIDB backend. Follow [the Rails website instructions](https://github.com/openstreetmap/openstreetmap-website/blob/master/INSTALL.md) to set up an APIDB backend.
 
@@ -36,7 +36,7 @@ Software Requirements:
 ```
 
 Note that the full set of packages needed from a fresh install (tested
-with Ubuntu 22.04, Debian 12 and 13) - you may already have many or all of these - is:
+with Ubuntu 24.04, Debian 12 and 13) - you may already have many or all of these - is:
 
 ```bash
     sudo apt-get install git build-essential cmake make

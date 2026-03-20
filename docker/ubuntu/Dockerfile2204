@@ -4,7 +4,7 @@ FROM ubuntu:22.04 AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && \
-    apt-get install -y gcc g++ make cmake \
+    apt-get install -y gcc g++ gcc-12 g++-12 make cmake \
        libfcgi-dev libxml2-dev libmemcached-dev libbrotli-dev \
        libboost-program-options-dev libyajl-dev \
        libpqxx-dev zlib1g-dev libfmt-dev \
@@ -17,6 +17,9 @@ WORKDIR /app
 
 # Copy the main application.
 COPY . ./
+
+ENV CC=/usr/bin/gcc-12
+ENV CXX=/usr/bin/g++-12
 
 # Compile, install and remove source
 RUN mkdir build && cd build && \
@@ -50,6 +53,9 @@ ENV CGIMAP_MODERATOR_RATELIMIT=1048576
 ENV CGIMAP_MODERATOR_MAXDEBT=1024
 ENV CGIMAP_PORT=8000
 ENV CGIMAP_INSTANCES=10
+
+ENV CC=/usr/bin/gcc-12
+ENV CXX=/usr/bin/g++-12
 
 EXPOSE 8000
 
