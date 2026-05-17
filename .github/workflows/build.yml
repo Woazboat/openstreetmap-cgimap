@@ -20,6 +20,8 @@ jobs:
 # Ubuntu 24.04 is currently disabled to due issues with c++20 and libpqxx
 #          - os: ubuntu
 #            version: noble
+          - os: ubuntu
+            version: resolute
     permissions:
       contents: write
     steps:
