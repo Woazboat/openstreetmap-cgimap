@@ -7,13 +7,26 @@ RUN apt-get update -qq && \
     apt-get install -y gcc g++ make cmake \
        libfcgi-dev libxml2-dev libmemcached-dev libbrotli-dev \
        libboost-program-options-dev libyajl-dev \
-       libpqxx-dev zlib1g-dev libfmt-dev \
-       postgresql-18 postgresql-server-dev-all dpkg-dev file \
+       zlib1g-dev libfmt-dev \
+       postgresql-18 postgresql-server-dev-all dpkg-dev file wget ca-certificates unzip \
        --no-install-recommends && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Build and install libpqxx 7.10.7
+# The libpqxx version packaged in Ubuntu 26.04 has a known issues which causes crashes
+# See https://github.com/jtv/libpqxx/issues/1195
+RUN wget https://github.com/jtv/libpqxx/archive/refs/tags/7.10.7.zip && \
+    unzip 7.10.7.zip && \
+    cd libpqxx-7.10.7 && \
+    mkdir build && \
+    cd build && \
+    cmake -DSKIP_PQXX_STATIC=OFF -DSKIP_PQXX_SHARED=ON .. && \
+    make -j${nproc} && \
+    make install && \
+    cd ../..
 
 # Copy the main application.
 COPY . ./
