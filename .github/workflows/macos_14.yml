@@ -12,12 +12,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install boost fmt fcgi yajl libmemcached libpqxx postgresql
+          brew install boost fmt fcgi yajl libmemcached libpq libpqxx postgresql
 
       - name: build
         run: |
             mkdir build && cd build && \
-            CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter" cmake .. -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release && \
+            CXXFLAGS="-Wall -Wextra -Wpedantic -Wno-unused-parameter -I/opt/homebrew/opt/postgresql@18/include" \
+            LDFLAGS="-L/opt/homebrew/opt/postgresql@18/lib" \
+            cmake .. -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release && \
             make -j${nproc} && \
             ctest --output-on-failure -E "db"
 
